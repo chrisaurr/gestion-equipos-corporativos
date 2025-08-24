@@ -1,0 +1,231 @@
+Enum estado_usuario {
+  activo
+  inactivo
+  vacaciones
+}
+
+Enum estado_equipo {
+  activo
+  inactivo
+  mantenimiento
+  suspendido
+}
+
+Enum alimentacion {
+  110v
+  220v
+  diesel
+  regular
+  super
+  bateria
+  ninguna
+}
+
+Enum conectividad {
+  bluetooth
+  wifi
+  gsm
+  nfc
+
+  bluetooth_wifi
+  bluetooth_gsm
+  bluetooth_nfc
+  wifi_gsm
+  wifi_nfc
+  gsm_nfc
+
+  bluetooth_wifi_gsm
+  bluetooth_wifi_nfc
+  bluetooth_gsm_nfc
+  wifi_gsm_nfc
+
+  bluetooth_wifi_gsm_nfc
+
+  ninguno
+}
+
+Enum operador {
+  starlink
+  claro
+  tigo
+  comnet
+  verasat
+  telecom
+  ninguno
+}
+
+Enum tipo_equipo {
+  vehiculo
+  electronico
+  mobiliario
+  herramienta
+}
+
+Enum motivo_cambio {
+  asignacion_inicial
+  cambio_area
+  empleado_despedido
+  empleado_renuncia
+  cambio_puesto
+  equipo_danado
+  reasignacion_administrativa
+}
+
+Enum estado_reporte {
+  abierto
+  en_proceso
+  resuelto
+  cerrado
+}
+
+Enum prioridad_reporte {
+  baja
+  media
+  alta
+  critica
+}
+
+Table usuario {
+  id uinteger [pk, increment]
+  codigo varchar(20) [unique, not null]
+  usuario varchar(50) [unique, not null]
+  primer_nombre varchar(50) [not null]
+  segundo_nombre varchar(50)
+  primer_apellido varchar(50) [not null]
+  segundo_apellido varchar(50)
+  estado estado_usuario [default: 'activo']
+  fecha_ingreso date [not null]
+  fecha_salida date
+  is_admin boolean [not null]
+  password varchar(100) [not null]
+  fecha_commit datetime [default: `now()`]
+}
+
+Table empleado {
+  id uinteger [pk, increment]
+  id_usuario uinteger [ref: - usuario.id, not null]
+  id_area uinteger [ref: > area.id, not null]
+  cargo varchar(100) [not null]
+  observaciones text
+}
+
+Table area {
+  id uinteger [pk, increment]
+  nombre varchar(50) [not null]
+  id_usuario uinteger [ref: > usuario.id]
+  activo boolean [default: true]
+  creado_por uinteger [ref: > usuario.id, not null]
+  fecha_commit datetime [default: `now()`]
+}
+
+Table marca {
+  id uinteger [pk, increment]
+  nombre varchar(50) [not null]
+  activo boolean [default: true]
+  creado_por uinteger [ref: > usuario.id, not null]
+  fecha_commit datetime [default: `now()`]
+}
+
+Table equipo {
+  id uinteger [pk, increment]
+  identificador varchar(20)
+  nombre varchar(50) [not null]
+  id_marca uinteger [ref: > marca.id, not null]
+  color varchar(50) [not null]
+  valor money(10, 2) [not null]
+  serie varchar(50) [not null]
+  extras text
+  tipo_equipo tipo_equipo [not null]
+  tipo_alimentacion alimentacion [default: 'ninguna']
+  id_empleado uinteger [ref: > empleado.id]
+  id_ubicacion uinteger [ref: > ubicacion.id]
+  estado estado_equipo [default: 'activo']
+  creado_por uinteger [ref: > usuario.id, not null]
+  fecha_commit datetime [default: `now()`]
+}
+
+Table vehiculo {
+  id uinteger [pk, increment]
+  no_motor varchar(20) [not null]
+  vin varchar(20) [not null, unique]
+  cilindrada uinteger [not null]
+  placa varchar(10) [not null, unique]
+  modelo uinteger [not null]
+  id_equipo uinteger [ref: - equipo.id, not null]
+}
+
+Table electronico {
+  id uinteger [pk, increment]
+  imei varchar(20) [unique]
+  sistema_operativo varchar(20)
+  conectividad conectividad [default: 'ninguno']
+  operador operador [default: 'ninguno']
+  id_equipo uinteger [ref: - equipo.id, not null]
+}
+
+Table mobiliario {
+  id uinteger [pk, increment]
+  material varchar(50) [not null]
+  altura float(8, 2) [not null]
+  ancho float(8, 2) [not null]
+  profundidad float(8, 2) [not null]
+  cantidad_piezas uinteger [default: 1]
+  id_equipo uinteger [ref: - equipo.id, not null]
+}
+
+Table herramienta {
+  id uinteger [pk, increment]
+  material varchar(50) [not null]
+  id_equipo uinteger [ref: - equipo.id, not null]
+}
+
+Table reporte {
+  id uinteger [pk, increment]
+  observacion text
+  id_causa uinteger [ref: > causa.id, not null]
+  id_equipo uinteger [ref: > equipo.id, not null]
+  prioridad prioridad_reporte [not null]
+  id_empleado uinteger [ref: > empleado.id, not null]
+  estado estado_reporte [default: 'abierto']
+  fecha_commit datetime [default: `now()`]
+}
+
+Table imagen {
+  id uinteger [pk, increment]
+  url text [not null]
+  id_reporte uinteger [ref: > reporte.id, not null]
+  activo boolean [default: true]
+  creado_por uinteger [ref: > usuario.id, not null]
+  fecha_commit datetime [default: `now()`]
+}
+
+Table causa {
+  id uinteger [pk, increment]
+  nombre varchar(50) [not null]
+  descripcion varchar(300)
+  activo boolean [default: true]
+  creado_por uinteger [ref: > usuario.id, not null]
+  fecha_commit datetime [default: `now()`]
+}
+
+Table historial_asignacion {
+  id uinteger [pk, increment]
+  id_equipo uinteger [ref: > equipo.id, not null]
+  id_empleado_anterior uinteger [ref: > empleado.id] // null si era nuevo
+  id_empleado_nuevo uinteger [ref: > empleado.id]    // null si se devuelve
+  fecha_asignacion datetime [not null]
+  fecha_devolucion datetime
+  motivo_cambio motivo_cambio [not null]
+  observaciones text
+  asignado_por uinteger [ref: > usuario.id, not null]
+  fecha_commit datetime [default: `now()`]
+}
+
+Table ubicacion {
+  id uinteger [pk, increment]
+  nombre varchar(100) [not null] // "Oficina Piso 2", "Almacén"
+  descripcion varchar(200)
+  activo boolean [default: true]
+  creado_por uinteger [ref: > usuario.id, not null]
+  fecha_commit datetime [default: `now()`]
+}

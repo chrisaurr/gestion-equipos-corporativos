@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Gestión de Áreas</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Gestión de Áreas</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Áreas</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Lista de Áreas</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-primary btn-sm" 
+                                    data-toggle="modal" data-target="#createModal">
+                                <i class="fas fa-plus"></i> Nueva Área
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Tabla con filtros inline -->
+                        <div class="table-responsive">
+                            <table id="areasTable" class="table table-bordered table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Responsable</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                    <!-- Fila de filtros -->
+                                    <tr class="filter-row">
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterNombre" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterResponsable">
+                                                <option value="">Todos</option>
+                                                <option th:each="usuario : ${usuariosActivos}" 
+                                                        th:value="${usuario.id}" 
+                                                        th:text="${usuario.primerNombre + ' ' + usuario.primerApellido}"></option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterActivo">
+                                                <option value="">Todos</option>
+                                                <option value="true">Activo</option>
+                                                <option value="false">Inactivo</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <button type="button" class="btn btn-secondary btn-sm btn-block" id="clearFilters">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="areasTableBody">
+                                    <!-- Contenido se llena dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Información y paginación -->
+                        <div class="row mt-3">
+                            <div class="col-sm-5">
+                                <div class="dataTables_info" id="tableInfo"></div>
+                            </div>
+                            <div class="col-sm-7">
+                                <div class="dataTables_paginate paging_simple_numbers" id="tablePagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="modals">
+    <!-- Modal Crear Área -->
+    <div class="modal fade" id="createModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-plus"></i> Nueva Área
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="createForm">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="createNombre">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="createNombre" name="nombre" 
+                                   maxlength="50" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="createResponsable">Responsable (Opcional)</label>
+                            <select class="form-control" id="createResponsable" name="responsableId">
+                                <option value="">Seleccione responsable</option>
+                                <option th:each="usuario : ${usuariosActivos}" 
+                                        th:value="${usuario.id}" 
+                                        th:text="${usuario.primerNombre + ' ' + usuario.primerApellido}"></option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Área -->
+    <div class="modal fade" id="editModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-edit"></i> Editar Área
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="editForm">
+                    <input type="hidden" id="editId" name="id">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label for="editNombre">Nombre <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" id="editNombre" name="nombre" 
+                                   maxlength="50" required>
+                        </div>
+                        
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Actualizar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Ver Detalles -->
+    <div class="modal fade" id="viewModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-eye"></i> Detalles del Área
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <dl class="row">
+                        <dt class="col-sm-4">ID:</dt>
+                        <dd class="col-sm-8" id="viewId"></dd>
+                        
+                        <dt class="col-sm-4">Nombre:</dt>
+                        <dd class="col-sm-8" id="viewNombre"></dd>
+                        
+                        <dt class="col-sm-4">Responsable:</dt>
+                        <dd class="col-sm-8" id="viewResponsable"></dd>
+                        
+                        <dt class="col-sm-4">Estado:</dt>
+                        <dd class="col-sm-8" id="viewEstado"></dd>
+                        
+                        <dt class="col-sm-4">Creado Por:</dt>
+                        <dd class="col-sm-8" id="viewCreadoPor"></dd>
+                        
+                        <dt class="col-sm-4">Fecha:</dt>
+                        <dd class="col-sm-8" id="viewFecha"></dd>
+                    </dl>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Asignar Responsable -->
+    <div class="modal fade" id="responsableModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h4 class="modal-title">
+                        <i class="fas fa-user-tie"></i> Gestionar Responsable
+                    </h4>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form id="responsableForm">
+                    <input type="hidden" id="responsableAreaId">
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Área:</label>
+                            <input type="text" class="form-control" id="responsableAreaNombre" readonly>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="responsableUsuario">Nuevo Responsable:</label>
+                            <select class="form-control" id="responsableUsuario">
+                                <option value="">Sin responsable</option>
+                                <option th:each="usuario : ${usuariosActivos}" 
+                                        th:value="${usuario.id}" 
+                                        th:text="${usuario.primerNombre + ' ' + usuario.primerApellido}"></option>
+                            </select>
+                            <small class="form-text text-muted">
+                                Seleccione "Sin responsable" para remover el responsable actual
+                            </small>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Asignar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                let currentPage = 0;
+                let pageSize = 10;
+                let currentFilters = {};
+                
+                // Cargar datos iniciales
+                loadAreas();
+                
+                // Configurar filtros con debounce
+                $('.filter-input').on('input change', debounce(function() {
+                    currentPage = 0;
+                    updateFilters();
+                    loadAreas();
+                }, 500));
+                
+                // Limpiar filtros
+                $('#clearFilters').click(function() {
+                    $('.filter-input').val('');
+                    currentPage = 0;
+                    currentFilters = {};
+                    loadAreas();
+                });
+                
+                // Formularios de modales
+                setupModals();
+                
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = function() {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
+                function updateFilters() {
+                    currentFilters = {
+                        nombre: $('#filterNombre').val(),
+                        responsableId: $('#filterResponsable').val() || null,
+                        activo: $('#filterActivo').val() !== '' ? $('#filterActivo').val() === 'true' : null,
+                        page: currentPage,
+                        size: pageSize,
+                        sort: 'fechaCommit',
+                        direction: 'desc'
+                    };
+                }
+                
+                function loadAreas() {
+                    updateFilters();
+                    
+                    // Limpiar parámetros vacíos
+                    const params = new URLSearchParams();
+                    Object.keys(currentFilters).forEach(key => {
+                        if (currentFilters[key] !== '' && currentFilters[key] !== null && currentFilters[key] !== undefined) {
+                            params.append(key, currentFilters[key]);
+                        }
+                    });
+                    
+                    $.ajax({
+                        url: '/api/areas/search?' + params.toString(),
+                        method: 'GET',
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function(data) {
+                            updateTable(data);
+                            updatePagination(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error al cargar areas:', error);
+                            showAlert('error', 'Error al cargar las áreas');
+                        }
+                    });
+                }
+                
+                function updateTable(data) {
+                    const tbody = $('#areasTableBody');
+                    tbody.empty();
+                    
+                    if (!data.content || data.content.length === 0) {
+                        tbody.append(`
+                            <tr>
+                                <td colspan="6" class="text-center text-muted">No se encontraron registros</td>
+                            </tr>
+                        `);
+                        updateInfo(0, 0, 0);
+                        return;
+                    }
+                    
+                    data.content.forEach(area => {
+                        const responsable = area.responsableNombre ? 
+                            area.responsableNombre : 
+                            '<span class="text-muted">Sin asignar</span>';
+                            
+                        const estado = area.activo ? 
+                            '<span class="badge badge-success">Activo</span>' : 
+                            '<span class="badge badge-danger">Inactivo</span>';
+                            
+                        const creadoPor = area.creadoPorNombre || '';
+                            
+                        const fecha = area.fechaCommit ? 
+                            new Date(area.fechaCommit).toLocaleDateString() : '';
+                        
+                        tbody.append(`
+                            <tr>
+                                <td>${area.nombre}</td>
+                                <td>${responsable}</td>
+                                <td>${estado}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-info btn-sm" onclick="viewArea(${area.id})" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" onclick="editArea(${area.id})" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-primary btn-sm" onclick="manageResponsable(${area.id}, '${area.nombre.replace(/'/g, "\\'")}', ${area.responsableId || 'null'})" title="Gestionar responsable">
+                                            <i class="fas fa-user-tie"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteArea(${area.id})" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    
+                    updateInfo(data.content.length, data.totalElements, data.number + 1);
+                }
+                
+                function updatePagination(data) {
+                    const pagination = $('#tablePagination');
+                    pagination.empty();
+                    
+                    if (data.totalPages <= 1) return;
+                    
+                    const ul = $('<ul class="pagination pagination-sm justify-content-end mb-0"></ul>');
+                    
+                    // Anterior
+                    ul.append(`
+                        <li class="page-item ${data.first ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number - 1}); return false;">Anterior</a>
+                        </li>
+                    `);
+                    
+                    // Páginas
+                    const start = Math.max(0, data.number - 2);
+                    const end = Math.min(data.totalPages - 1, data.number + 2);
+                    
+                    for (let i = start; i <= end; i++) {
+                        ul.append(`
+                            <li class="page-item ${i === data.number ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i + 1}</a>
+                            </li>
+                        `);
+                    }
+                    
+                    // Siguiente
+                    ul.append(`
+                        <li class="page-item ${data.last ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number + 1}); return false;">Siguiente</a>
+                        </li>
+                    `);
+                    
+                    pagination.append(ul);
+                }
+                
+                function updateInfo(showing, total, page) {
+                    $('#tableInfo').text(`Mostrando ${showing} de ${total} registros (página ${page})`);
+                }
+                
+                window.changePage = function(page) {
+                    currentPage = page;
+                    loadAreas();
+                };
+                
+                window.viewArea = function(id) {
+                    $.get(`/api/areas/${id}`)
+                        .done(function(area) {
+                            $('#viewId').text(area.id);
+                            $('#viewNombre').text(area.nombre);
+                            $('#viewResponsable').html(area.responsableNombre ? 
+                                area.responsableNombre : 
+                                '<span class="text-muted">Sin asignar</span>');
+                            $('#viewEstado').html(area.activo ? 
+                                '<span class="badge badge-success">Activo</span>' : 
+                                '<span class="badge badge-danger">Inactivo</span>');
+                            $('#viewCreadoPor').text(area.creadoPorNombre || '');
+                            $('#viewFecha').text(area.fechaCommit ? 
+                                new Date(area.fechaCommit).toLocaleString() : '');
+                            
+                            $('#viewModal').modal('show');
+                        });
+                };
+                
+                window.editArea = function(id) {
+                    $.get(`/api/areas/${id}`)
+                        .done(function(area) {
+                            $('#editId').val(area.id);
+                            $('#editNombre').val(area.nombre);
+                            
+                            $('#editModal').modal('show');
+                        });
+                };
+                
+                window.manageResponsable = function(areaId, areaNombre, currentResponsableId) {
+                    $('#responsableAreaId').val(areaId);
+                    $('#responsableAreaNombre').val(areaNombre);
+                    $('#responsableUsuario').val(currentResponsableId || '');
+                    $('#responsableModal').modal('show');
+                };
+                
+                window.deleteArea = function(id) {
+                    if (confirm('¿Está seguro de que desea eliminar esta área?')) {
+                        $.ajax({
+                            url: `/areas/${id}`,
+                            type: 'DELETE',
+                            success: function(response) {
+                                if (response === 'success') {
+                                    loadAreas();
+                                    showAlert('success', 'Área eliminada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            },
+                            error: function() {
+                                showAlert('error', 'Error al eliminar el área');
+                            }
+                        });
+                    }
+                };
+                
+                
+                function setupModals() {
+                    // Formulario crear
+                    $('#createForm').on('submit', function(e) {
+                        e.preventDefault();
+                        
+                        $.post('/areas', $(this).serialize())
+                            .done(function(response) {
+                                if (response === 'success') {
+                                    $('#createModal').modal('hide');
+                                    $('#createForm')[0].reset();
+                                    loadAreas();
+                                    showAlert('success', 'Área creada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            })
+                            .fail(function() {
+                                showAlert('error', 'Error al crear el área');
+                            });
+                    });
+                    
+                    // Formulario editar
+                    $('#editForm').on('submit', function(e) {
+                        e.preventDefault();
+                        const id = $('#editId').val();
+                        
+                        $.ajax({
+                            url: '/areas/' + id,
+                            type: 'PUT',
+                            data: $(this).serialize(),
+                            success: function(response) {
+                                if (response === 'success') {
+                                    $('#editModal').modal('hide');
+                                    loadAreas();
+                                    showAlert('success', 'Área actualizada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            },
+                            error: function() {
+                                showAlert('error', 'Error al actualizar el área');
+                            }
+                        });
+                    });
+                    
+                    // Formulario responsable
+                    $('#responsableForm').on('submit', function(e) {
+                        e.preventDefault();
+                        const areaId = $('#responsableAreaId').val();
+                        const usuarioId = $('#responsableUsuario').val();
+                        
+                        const url = usuarioId ? 
+                            `/areas/${areaId}/asignar-responsable` : 
+                            `/areas/${areaId}/remover-responsable`;
+                        
+                        const data = usuarioId ? {usuarioId: usuarioId} : {};
+                        
+                        $.post(url, data)
+                            .done(function(response) {
+                                if (response === 'success') {
+                                    $('#responsableModal').modal('hide');
+                                    loadAreas();
+                                    showAlert('success', 'Responsable actualizado exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            })
+                            .fail(function() {
+                                showAlert('error', 'Error al gestionar responsable');
+                            });
+                    });
+                }
+                
+                function showAlert(type, message) {
+                    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                    
+                    const alert = $(`
+                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                            <i class="fas ${iconClass}"></i> ${message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    `);
+                    
+                    $('.content .container-fluid').prepend(alert);
+                    
+                    setTimeout(function() {
+                        alert.alert('close');
+                    }, 5000);
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Ver Usuario</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Detalles del Usuario</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/usuarios">Usuarios</a></li>
+                            <li class="breadcrumb-item active">Ver</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="card card-primary card-outline">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-user"></i> 
+                                    <span th:text="${usuario.nombreCompleto}"></span>
+                                </h3>
+                                <div class="card-tools">
+                                    <span class="badge" 
+                                          th:class="${usuario.estado.name() == 'ACTIVO'} ? 'badge-success' : 
+                                                    (${usuario.estado.name() == 'INACTIVO'} ? 'badge-danger' : 
+                                                    (${usuario.estado.name() == 'VACACIONES'} ? 'badge-warning' : 'badge-info'))"
+                                          th:text="${usuario.estado}"></span>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th width="40%">Código:</th>
+                                                <td th:text="${usuario.codigo}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Usuario:</th>
+                                                <td th:text="${usuario.usuario}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Primer Nombre:</th>
+                                                <td th:text="${usuario.primerNombre}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Segundo Nombre:</th>
+                                                <td th:text="${usuario.segundoNombre} ?: '-'"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Primer Apellido:</th>
+                                                <td th:text="${usuario.primerApellido}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Segundo Apellido:</th>
+                                                <td th:text="${usuario.segundoApellido} ?: '-'"></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th width="40%">Estado:</th>
+                                                <td>
+                                                    <span class="badge" 
+                                                          th:class="${usuario.estado.name() == 'ACTIVO'} ? 'badge-success' : 
+                                                                    (${usuario.estado.name() == 'INACTIVO'} ? 'badge-danger' : 
+                                                                    (${usuario.estado.name() == 'VACACIONES'} ? 'badge-warning' : 'badge-info'))"
+                                                          th:text="${usuario.estado}"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Fecha de Ingreso:</th>
+                                                <td th:text="${#temporals.format(usuario.fechaIngreso, 'dd/MM/yyyy')}"></td>
+                                            </tr>
+                                            <tr th:if="${usuario.fechaSalida}">
+                                                <th>Fecha de Salida:</th>
+                                                <td th:text="${#temporals.format(usuario.fechaSalida, 'dd/MM/yyyy')}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Administrador:</th>
+                                                <td>
+                                                    <span class="badge" 
+                                                          th:class="${usuario.isAdmin} ? 'badge-warning' : 'badge-secondary'"
+                                                          th:text="${usuario.isAdmin} ? 'Sí' : 'No'"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Tipo:</th>
+                                                <td>
+                                                    <span class="badge" 
+                                                          th:class="${usuario.esEmpleado} ? 'badge-info' : 'badge-secondary'"
+                                                          th:text="${usuario.esEmpleado} ? 'Empleado' : 'Solo Usuario'"></span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <th>Fecha de Registro:</th>
+                                                <td th:text="${#temporals.format(usuario.fechaCommit, 'dd/MM/yyyy HH:mm')}"></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información de empleado si existe -->
+                        <div th:if="${usuario.esEmpleado}" class="card card-info card-outline">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-user-tie"></i> Información de Empleado
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <table class="table table-sm">
+                                            <tr>
+                                                <th width="40%">Área:</th>
+                                                <td th:text="${usuario.areaNombre}"></td>
+                                            </tr>
+                                            <tr>
+                                                <th>Cargo:</th>
+                                                <td th:text="${usuario.cargo}"></td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div th:if="${usuario.observaciones}">
+                                            <strong>Observaciones:</strong>
+                                            <p class="text-muted" th:text="${usuario.observaciones}"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Sidebar con acciones -->
+                    <div class="col-md-4">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Acciones</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="d-grid gap-2">
+                                    <a th:href="@{/usuarios/{id}/editar(id=${usuario.usuarioId})}" 
+                                       class="btn btn-warning btn-block">
+                                        <i class="fas fa-edit"></i> Editar Usuario
+                                    </a>
+                                    
+                                    <button type="button" class="btn btn-danger btn-block" 
+                                            th:data-usuario-id="${usuario.usuarioId}"
+                                            th:data-nombre-completo="${usuario.nombreCompleto}"
+                                            onclick="confirmDeleteFromView(this)">
+                                        <i class="fas fa-trash"></i> Eliminar Usuario
+                                    </button>
+                                    
+                                    <a href="/usuarios" class="btn btn-secondary btn-block">
+                                        <i class="fas fa-arrow-left"></i> Volver a Lista
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Información adicional -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">Información del Sistema</h3>
+                            </div>
+                            <div class="card-body">
+                                <small class="text-muted">
+                                    <strong>ID del Usuario:</strong> <span th:text="${usuario.usuarioId}"></span><br>
+                                    <span th:if="${usuario.esEmpleado}">
+                                        <strong>ID del Empleado:</strong> <span th:text="${usuario.empleadoId}"></span><br>
+                                    </span>
+                                    <strong>Último Cambio:</strong> <span th:text="${#temporals.format(usuario.fechaCommit, 'dd/MM/yyyy HH:mm:ss')}"></span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            function confirmDelete(usuarioId, nombre) {
+                if (confirm(`¿Está seguro de eliminar al usuario "${nombre}"?\n\nEsta acción cambiará el estado del usuario a INACTIVO.`)) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/usuarios/${usuarioId}/eliminar`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+            
+            function confirmDeleteFromView(button) {
+                const usuarioId = button.getAttribute('data-usuario-id');
+                const nombreCompleto = button.getAttribute('data-nombre-completo');
+                confirmDelete(usuarioId, nombreCompleto);
+            }
+        </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Gestión de Usuarios</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Gestión de Usuarios</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Usuarios</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Lista de Usuarios</h3>
+                        <div class="card-tools">
+                            <a th:href="@{/usuarios/crear}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Nuevo Usuario
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Tabla con filtros inline -->
+                        <div class="table-responsive">
+                            <table id="usuariosTable" class="table table-bordered table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Código</th>
+                                        <th>Usuario</th>
+                                        <th>Nombre Completo</th>
+                                        <th>Estado</th>
+                                        <th>Tipo</th>
+                                        <th>Área</th>
+                                        <th>Fecha Ingreso</th>
+                                        <th>Admin</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                    <!-- Fila de filtros -->
+                                    <tr class="filter-row">
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterCodigo" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterUsuario" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterNombre" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterEstado">
+                                                <option value="">Todos</option>
+                                                <option th:each="estado : ${estados}" 
+                                                        th:value="${estado}" 
+                                                        th:text="${estado}"></option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterTipo">
+                                                <option value="">Todos</option>
+                                                <option value="true">Empleado</option>
+                                                <option value="false">Solo Usuario</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterArea">
+                                                <option value="">Todas</option>
+                                                <!-- Se llenan dinámicamente -->
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <input type="date" class="form-control form-control-sm filter-input" 
+                                                   id="filterFecha">
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterAdmin">
+                                                <option value="">Todos</option>
+                                                <option value="true">Sí</option>
+                                                <option value="false">No</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <button type="button" class="btn btn-sm btn-secondary" id="clearFilters">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usuariosTableBody">
+                                    <!-- Se llena dinámicamente vía AJAX -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Paginación -->
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <div class="dataTables_info" id="tableInfo">
+                                    Mostrando 0 a 0 de 0 registros
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <nav aria-label="Paginación">
+                                    <ul class="pagination pagination-sm justify-content-end mb-0" id="pagination">
+                                        <!-- Se genera dinámicamente -->
+                                    </ul>
+                                </nav>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Modal for Employee History -->
+    <div layout:fragment="modals">
+        <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="historyModalLabel">
+                            <i class="fas fa-history"></i> Historial Laboral
+                        </h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="historyContent">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p>Cargando historial...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            // Esperar a que jQuery esté disponible
+            function waitForJQuery() {
+                if (typeof $ !== 'undefined') {
+                    initUsuariosList();
+                } else {
+                    setTimeout(waitForJQuery, 100);
+                }
+            }
+            
+            function initUsuariosList() {
+                let currentPage = 0;
+                let pageSize = 10;
+                let currentFilters = {};
+                
+                // Cargar datos iniciales
+                loadUsuarios();
+                
+                // Configurar filtros con debounce
+                $('.filter-input').on('input change', debounce(function() {
+                    currentPage = 0;
+                    updateFilters();
+                    loadUsuarios();
+                }, 500));
+                
+                // Limpiar filtros
+                $('#clearFilters').click(function() {
+                    $('.filter-input').val('');
+                    currentPage = 0;
+                    currentFilters = {};
+                    loadUsuarios();
+                });
+                
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = function() {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
+                function updateFilters() {
+                    currentFilters = {
+                        codigo: $('#filterCodigo').val(),
+                        usuario: $('#filterUsuario').val(),
+                        primerNombre: $('#filterNombre').val(),
+                        estado: $('#filterEstado').val(),
+                        esEmpleado: $('#filterTipo').val() !== '' ? $('#filterTipo').val() === 'true' : null,
+                        fechaIngresoDesde: $('#filterFecha').val(),
+                        isAdmin: $('#filterAdmin').val() !== '' ? $('#filterAdmin').val() === 'true' : null,
+                        page: currentPage,
+                        size: pageSize,
+                        sort: 'fechaCommit',
+                        direction: 'desc'
+                    };
+                }
+                
+                function loadUsuarios() {
+                    updateFilters();
+                    
+                    // Limpiar parámetros vacíos
+                    const params = new URLSearchParams();
+                    Object.keys(currentFilters).forEach(key => {
+                        if (currentFilters[key] !== '' && currentFilters[key] !== null && currentFilters[key] !== undefined) {
+                            params.append(key, currentFilters[key]);
+                        }
+                    });
+                    
+                    $.ajax({
+                        url: '/api/v1/usuarios/search?' + params.toString(),
+                        method: 'GET',
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function(data) {
+                            renderTable(data.content);
+                            renderPagination(data);
+                            updateTableInfo(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error cargando usuarios:', error);
+                            showAlert('Error cargando datos: ' + error, 'danger');
+                        }
+                    });
+                }
+                
+                function renderTable(usuarios) {
+                    const tbody = $('#usuariosTableBody');
+                    tbody.empty();
+                    
+                    if (usuarios.length === 0) {
+                        tbody.append('<tr><td colspan="9" class="text-center">No se encontraron usuarios</td></tr>');
+                        return;
+                    }
+                    
+                    usuarios.forEach(usuario => {
+                        const row = `
+                            <tr>
+                                <td>${usuario.codigo}</td>
+                                <td>${usuario.usuario}</td>
+                                <td>${usuario.nombreCompleto}</td>
+                                <td>
+                                    <span class="badge ${getEstadoBadge(usuario.estado)}">${usuario.estado}</span>
+                                </td>
+                                <td>
+                                    <span class="badge ${usuario.esEmpleado ? 'badge-info' : 'badge-secondary'}">
+                                        ${usuario.esEmpleado ? 'Empleado' : 'Usuario'}
+                                    </span>
+                                </td>
+                                <td>${usuario.esEmpleado ? (usuario.areaNombre || '-') : '-'}</td>
+                                <td>${formatDate(usuario.fechaIngreso)}</td>
+                                <td>
+                                    <span class="badge ${usuario.isAdmin ? 'badge-warning' : 'badge-light'}">
+                                        ${usuario.isAdmin ? 'Sí' : 'No'}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <a href="/usuarios/${usuario.usuarioId}" class="btn btn-info btn-sm" title="Ver">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        <a href="/usuarios/${usuario.usuarioId}/editar" class="btn btn-warning btn-sm" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        ${usuario.esEmpleado ? 
+                                            `<button type="button" class="btn btn-success btn-sm" title="Ver Historial" 
+                                                     onclick="viewHistory(${usuario.usuarioId}, '${usuario.nombreCompleto}')">
+                                                <i class="fas fa-history"></i>
+                                             </button>` : ''}
+                                        <button type="button" class="btn btn-danger btn-sm" title="Eliminar"
+                                                onclick="confirmDelete(${usuario.usuarioId}, '${usuario.nombreCompleto}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                }
+                
+                function renderPagination(data) {
+                    const pagination = $('#pagination');
+                    pagination.empty();
+                    
+                    const totalPages = data.totalPages;
+                    const currentPageNum = data.number;
+                    
+                    // Anterior
+                    pagination.append(`
+                        <li class="page-item ${currentPageNum === 0 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${currentPageNum - 1})">Anterior</a>
+                        </li>
+                    `);
+                    
+                    // Páginas
+                    const startPage = Math.max(0, currentPageNum - 2);
+                    const endPage = Math.min(totalPages - 1, currentPageNum + 2);
+                    
+                    for (let i = startPage; i <= endPage; i++) {
+                        pagination.append(`
+                            <li class="page-item ${i === currentPageNum ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i})">${i + 1}</a>
+                            </li>
+                        `);
+                    }
+                    
+                    // Siguiente
+                    pagination.append(`
+                        <li class="page-item ${currentPageNum === totalPages - 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${currentPageNum + 1})">Siguiente</a>
+                        </li>
+                    `);
+                }
+                
+                function updateTableInfo(data) {
+                    const start = data.number * data.size + 1;
+                    const end = Math.min((data.number + 1) * data.size, data.totalElements);
+                    $('#tableInfo').text(`Mostrando ${start} a ${end} de ${data.totalElements} registros`);
+                }
+                
+                function getEstadoBadge(estado) {
+                    switch(estado) {
+                        case 'ACTIVO': return 'badge-success';
+                        case 'INACTIVO': return 'badge-danger';
+                        case 'VACACIONES': return 'badge-warning';
+                        case 'LICENCIA': return 'badge-info';
+                        default: return 'badge-secondary';
+                    }
+                }
+                
+                function formatDate(dateString) {
+                    if (!dateString) return '-';
+                    const date = new Date(dateString);
+                    return date.toLocaleDateString('es-ES');
+                }
+                
+                function showAlert(message, type) {
+                    const alert = `
+                        <div class="alert alert-${type} alert-dismissible fade show" role="alert">
+                            ${message}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    `;
+                    $('.content .container-fluid').prepend(alert);
+                }
+                
+                // Funciones globales
+                window.changePage = function(page) {
+                    if (page >= 0) {
+                        currentPage = page;
+                        loadUsuarios();
+                    }
+                };
+                
+                window.confirmDelete = function(usuarioId, nombre) {
+                    if (confirm(`¿Está seguro de eliminar al usuario "${nombre}"?`)) {
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/usuarios/${usuarioId}/eliminar`;
+                        document.body.appendChild(form);
+                        form.submit();
+                    }
+                };
+                
+                window.viewHistory = function(usuarioId, nombreCompleto) {
+                    $('#historyModalLabel').html(`<i class="fas fa-history"></i> Historial Laboral - ${nombreCompleto}`);
+                    $('#historyContent').html(`
+                        <div class="text-center">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p>Cargando historial...</p>
+                        </div>
+                    `);
+                    
+                    $('#historyModal').modal('show');
+                    
+                    $.ajax({
+                        url: `/api/v1/usuarios/${usuarioId}/historial-empleado`,
+                        method: 'GET',
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function(data) {
+                            renderHistoryTable(data);
+                        },
+                        error: function(xhr, status, error) {
+                            $('#historyContent').html(`
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Error cargando historial: ${xhr.responseText || error}
+                                </div>
+                            `);
+                        }
+                    });
+                };
+                
+                function renderHistoryTable(historial) {
+                    if (!historial || historial.length === 0) {
+                        $('#historyContent').html(`
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                No hay historial laboral registrado para este empleado.
+                            </div>
+                        `);
+                        return;
+                    }
+                    
+                    let tableHTML = `
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Tipo de Cambio</th>
+                                        <th>Área Anterior</th>
+                                        <th>Área Nueva</th>
+                                        <th>Cargo Anterior</th>
+                                        <th>Cargo Nuevo</th>
+                                        <th>Motivo</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+                    
+                    historial.forEach(item => {
+                        tableHTML += `
+                            <tr>
+                                <td>${formatDateTime(item.fechaCambio)}</td>
+                                <td><span class="badge ${getTipoCambioBadge(item.tipoCambio)}">${formatTipoCambio(item.tipoCambio)}</span></td>
+                                <td>${item.areaAnteriorNombre || '-'}</td>
+                                <td>${item.areaNuevaNombre || '-'}</td>
+                                <td>${item.cargoAnterior || '-'}</td>
+                                <td>${item.cargoNuevo || '-'}</td>
+                                <td>${item.motivo || '-'}</td>
+                            </tr>
+                        `;
+                    });
+                    
+                    tableHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+                    
+                    $('#historyContent').html(tableHTML);
+                }
+                
+                function formatDateTime(dateString) {
+                    if (!dateString) return '-';
+                    const date = new Date(dateString);
+                    return date.toLocaleString('es-ES');
+                }
+                
+                function getTipoCambioBadge(tipoCambio) {
+                    switch(tipoCambio) {
+                        case 'INGRESO': return 'badge-primary';
+                        case 'ASCENSO_JEFE': return 'badge-success';
+                        case 'DESCENSO': return 'badge-warning';
+                        case 'TRANSFERENCIA': return 'badge-info';
+                        case 'CAMBIO_CARGO': return 'badge-secondary';
+                        case 'REINGRESO': return 'badge-primary';
+                        case 'SALIDA': return 'badge-danger';
+                        default: return 'badge-light';
+                    }
+                }
+                
+                function formatTipoCambio(tipoCambio) {
+                    switch(tipoCambio) {
+                        case 'INGRESO': return 'Ingreso';
+                        case 'ASCENSO_JEFE': return 'Ascenso a Jefe';
+                        case 'DESCENSO': return 'Descenso';
+                        case 'TRANSFERENCIA': return 'Transferencia';
+                        case 'CAMBIO_CARGO': return 'Cambio de Cargo';
+                        case 'REINGRESO': return 'Reingreso';
+                        case 'SALIDA': return 'Salida';
+                        default: return tipoCambio;
+                    }
+                }
+            }
+            
+            // Iniciar cuando el DOM esté listo
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', waitForJQuery);
+            } else {
+                waitForJQuery();
+            }
+        </script>
+    </div>
+</body>
+</html>

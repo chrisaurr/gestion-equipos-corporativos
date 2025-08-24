@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Editar Usuario</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Editar Usuario</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/usuarios">Usuarios</a></li>
+                            <li class="breadcrumb-item active">Editar</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Error Message -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-warning">
+                            <div class="card-header">
+                                <h3 class="card-title">Editar Usuario</h3>
+                            </div>
+                            
+                            <form th:action="@{/usuarios/{id}(id=${usuarioId})}" method="post" th:object="${usuarioEmpleadoUpdateDTO}">
+                                <div class="card-body">
+                                    
+                                    <!-- Datos básicos del usuario -->
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="codigo">Código <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="codigo" th:field="*{codigo}"
+                                                       th:class="${#fields.hasErrors('codigo')} ? 'form-control is-invalid' : 'form-control'"
+                                                       placeholder="Código único del usuario">
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="usuario">Usuario <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="usuario" th:field="*{usuario}"
+                                                       th:class="${#fields.hasErrors('usuario')} ? 'form-control is-invalid' : 'form-control'"
+                                                       placeholder="Nombre de usuario">
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('usuario')}" th:errors="*{usuario}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="primerNombre">Primer Nombre <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="primerNombre" th:field="*{primerNombre}"
+                                                       th:class="${#fields.hasErrors('primerNombre')} ? 'form-control is-invalid' : 'form-control'"
+                                                       placeholder="Primer nombre">
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('primerNombre')}" th:errors="*{primerNombre}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="segundoNombre">Segundo Nombre</label>
+                                                <input type="text" class="form-control" id="segundoNombre" th:field="*{segundoNombre}"
+                                                       placeholder="Segundo nombre (opcional)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="primerApellido">Primer Apellido <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="primerApellido" th:field="*{primerApellido}"
+                                                       th:class="${#fields.hasErrors('primerApellido')} ? 'form-control is-invalid' : 'form-control'"
+                                                       placeholder="Primer apellido">
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('primerApellido')}" th:errors="*{primerApellido}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="segundoApellido">Segundo Apellido</label>
+                                                <input type="text" class="form-control" id="segundoApellido" th:field="*{segundoApellido}"
+                                                       placeholder="Segundo apellido (opcional)">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="estado">Estado</label>
+                                                <select class="form-control" id="estado" th:field="*{estado}">
+                                                    <option th:each="estado : ${estados}" 
+                                                            th:value="${estado}" 
+                                                            th:text="${estado}"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="fechaIngreso">Fecha de Ingreso <span class="text-danger">*</span></label>
+                                                <input type="date" class="form-control" id="fechaIngreso" 
+                                                       name="fechaIngreso"
+                                                       th:value="${#dateUtils.formatDateForInput(usuarioEmpleadoUpdateDTO.fechaIngreso)}"
+                                                       th:class="${#fields.hasErrors('fechaIngreso')} ? 'form-control is-invalid' : 'form-control'">
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('fechaIngreso')}" th:errors="*{fechaIngreso}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="fechaSalida">Fecha de Salida</label>
+                                                <input type="date" class="form-control" id="fechaSalida" th:field="*{fechaSalida}">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="isAdmin" th:field="*{isAdmin}">
+                                                <label class="form-check-label" for="isAdmin">
+                                                    ¿Es administrador del sistema?
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <!-- Sección de cambio de contraseña -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="changePassword" th:field="*{changePassword}">
+                                                <label class="form-check-label" for="changePassword">
+                                                    <strong>Cambiar contraseña</strong>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div id="passwordSection" style="display: none;">
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="password">Nueva Contraseña <span class="text-danger password-required">*</span></label>
+                                                    <input type="password" class="form-control" id="password" th:field="*{password}"
+                                                           th:class="${#fields.hasErrors('password')} ? 'form-control is-invalid' : 'form-control'"
+                                                           placeholder="Nueva contraseña">
+                                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('password')}" th:errors="*{password}"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="confirmPassword">Confirmar Nueva Contraseña <span class="text-danger password-required">*</span></label>
+                                                    <input type="password" class="form-control" id="confirmPassword" th:field="*{confirmPassword}"
+                                                           th:class="${#fields.hasErrors('confirmPassword')} ? 'form-control is-invalid' : 'form-control'"
+                                                           placeholder="Confirmar nueva contraseña">
+                                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('confirmPassword')}" th:errors="*{confirmPassword}"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <hr>
+                                    
+                                    <!-- Checkbox para empleado -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="esEmpleado" th:field="*{esEmpleado}">
+                                                <label class="form-check-label" for="esEmpleado">
+                                                    <strong>¿Es empleado de la empresa?</strong>
+                                                </label>
+                                                <small class="form-text text-muted">
+                                                    Si marca esta opción, se registrarán los datos adicionales del empleado
+                                                </small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Sección de datos del empleado -->
+                                    <div id="datosEmpleado" th:style="${usuarioEmpleadoUpdateDTO.esEmpleado} ? 'display: block;' : 'display: none;'">
+                                        <hr>
+                                        <h5 class="text-primary"><i class="fas fa-user-tie"></i> Datos del Empleado</h5>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="areaId">Área <span class="text-danger empleado-required">*</span></label>
+                                                    <select class="form-control" id="areaId" th:field="*{areaId}"
+                                                            th:class="${#fields.hasErrors('areaId')} ? 'form-control is-invalid' : 'form-control'">
+                                                        <option value="">Seleccione un área</option>
+                                                        <option th:each="area : ${areas}" 
+                                                                th:value="${area.id}" 
+                                                                th:text="${area.nombre}"></option>
+                                                    </select>
+                                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('areaId')}" th:errors="*{areaId}"></div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="form-group">
+                                                    <label for="cargo">Cargo <span class="text-danger empleado-required">*</span></label>
+                                                    <input type="text" class="form-control" id="cargo" th:field="*{cargo}"
+                                                           th:class="${#fields.hasErrors('cargo')} ? 'form-control is-invalid' : 'form-control'"
+                                                           placeholder="Cargo o posición">
+                                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('cargo')}" th:errors="*{cargo}"></div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <div class="form-group">
+                                                    <label for="observaciones">Observaciones</label>
+                                                    <textarea class="form-control" id="observaciones" th:field="*{observaciones}" 
+                                                              rows="3" placeholder="Observaciones adicionales (opcional)"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <button type="submit" class="btn btn-warning">
+                                                <i class="fas fa-save"></i> Actualizar Usuario
+                                            </button>
+                                            <a href="/usuarios" class="btn btn-secondary ml-2">
+                                                <i class="fas fa-times"></i> Cancelar
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                // Manejar el checkbox de empleado
+                $('#esEmpleado').change(function() {
+                    const isChecked = $(this).is(':checked');
+                    const datosEmpleado = $('#datosEmpleado');
+                    const requiredFields = $('#areaId, #cargo');
+                    
+                    if (isChecked) {
+                        datosEmpleado.slideDown();
+                        // Hacer campos obligatorios
+                        requiredFields.attr('required', true);
+                        $('.empleado-required').show();
+                    } else {
+                        datosEmpleado.slideUp();
+                        // Remover obligatoriedad
+                        requiredFields.removeAttr('required');
+                        // Limpiar valores
+                        $('#areaId').val('');
+                        $('#cargo').val('');
+                        $('#observaciones').val('');
+                        $('.empleado-required').hide();
+                    }
+                });
+                
+                // Manejar el checkbox de cambio de contraseña
+                $('#changePassword').change(function() {
+                    const isChecked = $(this).is(':checked');
+                    const passwordSection = $('#passwordSection');
+                    const passwordFields = $('#password, #confirmPassword');
+                    
+                    if (isChecked) {
+                        passwordSection.slideDown();
+                        passwordFields.attr('required', true);
+                        $('.password-required').show();
+                    } else {
+                        passwordSection.slideUp();
+                        passwordFields.removeAttr('required');
+                        passwordFields.val('');
+                        $('.password-required').hide();
+                    }
+                });
+                
+                // Verificar estado inicial de los checkboxes
+                if ($('#esEmpleado').is(':checked')) {
+                    $('#areaId, #cargo').attr('required', true);
+                }
+                
+                if ($('#changePassword').is(':checked')) {
+                    $('#passwordSection').show();
+                    $('#password, #confirmPassword').attr('required', true);
+                }
+                
+                // Validación en tiempo real para usuario único
+                $('#usuario').on('blur', function() {
+                    const usuario = $(this).val();
+                    const usuarioId = /*[[${usuarioId}]]*/ 0;
+                    
+                    if (usuario.trim() !== '') {
+                        $.ajax({
+                            url: `/api/v1/usuarios/exists/usuario/${encodeURIComponent(usuario)}/exclude/${usuarioId}`,
+                            method: 'GET',
+                            success: function(exists) {
+                                if (exists) {
+                                    $('#usuario').addClass('is-invalid');
+                                    $('.temp-usuario-feedback').remove();
+                                    $('#usuario').after('<div class="invalid-feedback temp-usuario-feedback">Este nombre de usuario ya existe</div>');
+                                } else {
+                                    $('#usuario').removeClass('is-invalid');
+                                    $('.temp-usuario-feedback').remove();
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Validación en tiempo real para código único
+                $('#codigo').on('blur', function() {
+                    const codigo = $(this).val();
+                    const usuarioId = /*[[${usuarioId}]]*/ 0;
+                    
+                    if (codigo.trim() !== '') {
+                        $.ajax({
+                            url: `/api/v1/usuarios/exists/codigo/${encodeURIComponent(codigo)}/exclude/${usuarioId}`,
+                            method: 'GET',
+                            success: function(exists) {
+                                if (exists) {
+                                    $('#codigo').addClass('is-invalid');
+                                    $('.temp-codigo-feedback').remove();
+                                    $('#codigo').after('<div class="invalid-feedback temp-codigo-feedback">Este código ya existe</div>');
+                                } else {
+                                    $('#codigo').removeClass('is-invalid');
+                                    $('.temp-codigo-feedback').remove();
+                                }
+                            }
+                        });
+                    }
+                });
+                
+                // Validación de confirmación de contraseña
+                $('#confirmPassword').on('blur', function() {
+                    const password = $('#password').val();
+                    const confirmPassword = $(this).val();
+                    
+                    if (password !== confirmPassword) {
+                        $(this).addClass('is-invalid');
+                        $('.temp-password-feedback').remove();
+                        $(this).after('<div class="invalid-feedback temp-password-feedback">Las contraseñas no coinciden</div>');
+                    } else {
+                        $(this).removeClass('is-invalid');
+                        $('.temp-password-feedback').remove();
+                    }
+                });
+                
+                // Limpiar validaciones temporales al escribir
+                $('#usuario, #codigo').on('input', function() {
+                    $(this).removeClass('is-invalid');
+                    $('.temp-usuario-feedback, .temp-codigo-feedback').remove();
+                });
+                
+                $('#confirmPassword').on('input', function() {
+                    $(this).removeClass('is-invalid');
+                    $('.temp-password-feedback').remove();
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>
