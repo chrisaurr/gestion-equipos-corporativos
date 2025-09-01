@@ -5,18 +5,112 @@ Todos los cambios notables de este proyecto serán documentados en este archivo.
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 y este proyecto adhiere a [Versionado Semántico](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [Unreleased] - Próximas Funcionalidades
 
-### Planned for v0.2.0
-- **Docker Setup**: Configuración Docker Compose para desarrollo fácil
-- **Seeders**: Usuarios por defecto para setup inicial sin configuración manual
-- Módulo de gestión de equipos con herencia de tipos
-- Sistema de asignaciones de equipos a empleados
+### Planned for v1.1.0
+- **SweetAlert2 Integration**: Toast notifications y modales de confirmación elegantes
+- **Role-Based Access Control**: Permisos granulares más allá del boolean `is_admin`
+- **Docker Compose**: Containerización completa para despliegue DigitalOcean
 
-### Planned for v0.3.0  
-- Módulo de reportes con carga de imágenes
-- Configuración de JaCoCo para cobertura de pruebas
-- Testing automatizado completo
+### Planned for v1.2.0  
+- **Testing & QA**: Cobertura JaCoCo 80% en servicios críticos
+- **Upload Imágenes**: Múltiples imágenes por reporte
+- **Dashboard**: Métricas y analytics del sistema
+
+## [1.0.0] - 2025-09-01
+
+### ✨ Added - Sistema Completo Implementado
+
+**LANZAMIENTO MAYOR**: Sistema de gestión de equipos corporativos completamente funcional desde v0.1.0 → v1.0.0
+
+#### 🔐 Autenticación y Seguridad
+- **Autenticación BCrypt**: Sistema de login con usuarios de BD y contraseñas encriptadas
+- **Spring Security 6**: Configuración completa con gestión de sesiones
+- **Sistema de Roles**: Diferenciación ADMIN (`is_admin=true`) vs usuarios regulares
+- **AuthService**: Contexto de usuario para auditoría automática en toda la aplicación
+
+#### 📦 Módulos Principales Implementados (7 módulos funcionales)
+
+**1. Gestión de Usuarios y Empleados**
+- CRUD completo con tablas Ajax dinámicas y filtros en tiempo real
+- Sistema dual: Usuario puede existir solo o con registro empleado (1:1 opcional)
+- Estados: ACTIVO, INACTIVO, VACACIONES, LICENCIA
+- Historial automático vía triggers PostgreSQL
+- Modales Bootstrap para operaciones CRUD
+
+**2. Gestión de Áreas Organizacionales**
+- CRUD de áreas con sistema de responsables
+- Usuarios (con/sin empleado) pueden ser jefes de área
+- Auditoría automática con session context
+- Soft delete preservando integridad histórica
+
+**3. Control de Inventario de Equipos**
+- 4 tipos de equipos: Electrónicos, Vehículos, Herramientas, Mobiliario
+- Herencia single table con campos específicos por tipo
+- Identificadores automáticos: EQ-2025-00001 (triggers PostgreSQL)
+- Estados: ACTIVO, INACTIVO, MANTENIMIENTO, SUSPENDIDO, BAJA
+- QueryDSL filtering por tipo, estado, ubicación, marca
+
+**4. Sistema de Asignaciones de Equipos**
+- Asignación múltiple de equipos a usuarios
+- Control de disponibilidad (solo equipos ACTIVOS sin reportes)
+- Historial automático de entregas/devoluciones vía triggers
+- Estados de devolución: PENDIENTE, CONFIRMADA
+- Validaciones de negocio para integridad
+
+**5. Sistema de Reportes con Flujo de Estados**
+- Reportes de incidencias con flujo: ABIERTO → EN_PROCESO → RESUELTO/CERRADO
+- Sistema de prioridades: BAJA, MEDIA, ALTA, CRÍTICA por causa
+- Restricción: Un equipo máximo puede tener un reporte activo
+- Bloqueo de asignaciones si equipo tiene reportes ABIERTO/EN_PROCESO
+- Validaciones de transición de estados
+
+**6. Catálogos de Soporte**
+- Gestión de Marcas: CRUD con filtros para organización de equipos
+- Gestión de Ubicaciones: Sistema de ubicaciones físicas
+- Gestión de Causas: Catálogo para reportes con prioridades
+
+**7. Sistema de Historial y Auditoría**
+- Triggers PostgreSQL automáticos para empleados: TRANSFERENCIA, ASCENSO_JEFE, DESCENSO, REINGRESO
+- Timeline visual de cambios en modales
+- Solo empleados (no usuarios regulares) generan historial
+- Preservación completa para auditoría
+
+#### 🛠️ Arquitectura Técnica Completa
+- **Spring Boot 3.5.4** con Java 21
+- **PostgreSQL 15+** con Flyway migrations automáticas (V1-V6)
+- **QueryDSL** para consultas type-safe y filtrado dinámico
+- **Thymeleaf + AdminLTE 3.2.0** frontend responsivo
+- **Bootstrap 4** + jQuery + Ajax para UX moderna
+- **Lombok** reducción boilerplate
+
+#### 🎨 Patrones de Interfaz Consistentes
+- **Tablas Ajax**: Filtros inline, paginación servidor, búsqueda tiempo real
+- **Modales vs Páginas**: Modales para CRUD simple, páginas para flujos complejos
+- **Botones Contextuales**: Ver (azul), Editar (amarillo), Historial (verde), Eliminar (rojo)
+- **Alerts Dinámicos**: Confirmaciones y errores con feedback visual
+
+#### 💾 Base de Datos PostgreSQL Avanzada
+- **ENUMs Nativos**: EstadoUsuario, EstadoEquipo, EstadoReporte, TipoCambioEmpleado, etc.
+- **6 Triggers Automáticos**: Identificadores, historial empleados, asignaciones
+- **Soft Delete**: Integridad referencial preservada
+- **Audit Fields**: Created_by, fecha_commit automáticos
+
+### 📚 Documentación Actualizada
+- **README.md**: Documentación completa para testers (estado real del sistema)
+- **CLAUDE.md**: Guía técnica con todos los módulos implementados
+- **CHANGELOG.md**: Historial completo de cambios
+
+### 🔄 Changed - Actualizaciones de Versión
+- **Version**: v0.1.0 → v1.0.0 (sistema completo funcional)
+- **Package Structure**: 7 módulos con arquitectura completa
+- **Database Schema**: Todas las tablas y relaciones implementadas
+
+### 🎯 Sistema Listo para Testing
+- **7 Módulos Funcionales**: Usuarios, Áreas, Equipos, Asignaciones, Reportes, Marcas, Ubicaciones
+- **Flujos de Negocio**: Validaciones y transiciones de estado implementadas
+- **Login**: admin / admin (credenciales reales)
+- **UI Consistente**: Patrones Ajax + Modal/Página según complejidad
 
 ## [0.1.0] - 2024-08-24
 

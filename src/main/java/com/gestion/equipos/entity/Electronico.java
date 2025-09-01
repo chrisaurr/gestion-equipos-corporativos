@@ -1,5 +1,6 @@
 package com.gestion.equipos.entity;
 
+import com.gestion.equipos.config.PostgreSQLEnumJdbcType;
 import com.gestion.equipos.entity.enums.Conectividad;
 import com.gestion.equipos.entity.enums.Operador;
 import jakarta.persistence.*;
@@ -8,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
 
 @Data
 @AllArgsConstructor
@@ -29,11 +31,13 @@ public class Electronico {
     private String sistemaOperativo;
     
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(50) default 'NINGUNO'")
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "conectividad", columnDefinition = "conectividad")
     private Conectividad conectividad = Conectividad.NINGUNO;
     
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(20) default 'NINGUNO'")
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "operador", columnDefinition = "operador")
     private Operador operador = Operador.NINGUNO;
     
     @NotNull

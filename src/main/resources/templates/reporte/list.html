@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Gestión de Reportes</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Gestión de Reportes</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Reportes</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Lista de Reportes</h3>
+                        <div class="card-tools">
+                            <a href="/reportes/crear" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Nuevo Reporte
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        
+                        <!-- Tabla -->
+                        <div class="table-responsive">
+                            <table id="reportesTable" class="table table-bordered table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Estado</th>
+                                        <th>Observación</th>
+                                        <th>Causa</th>
+                                        <th>Prioridad</th>
+                                        <th>Equipo</th>
+                                        <th>Usuario</th>
+                                        <th>Fecha</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                    <!-- Fila de filtros -->
+                                    <tr class="filter-row">
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterEstado">
+                                                <option value="">Todos</option>
+                                                <option value="ABIERTO">Abierto</option>
+                                                <option value="EN_PROCESO">En Proceso</option>
+                                                <option value="RESUELTO">Resuelto</option>
+                                                <option value="CERRADO">Cerrado</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterObservacion" placeholder="Buscar...">
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterCausa">
+                                                <option value="">Todas</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <!-- Prioridad se filtra por causa -->
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterEquipo">
+                                                <option value="">Todos</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterUsuario">
+                                                <option value="">Todos</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <!-- Fecha no se filtra -->
+                                        </th>
+                                        <th class="text-center">
+                                            <button type="button" class="btn btn-secondary btn-sm" id="clearFilters" title="Limpiar filtros">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportesTableBody">
+                                    <!-- Contenido se llena dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Información y paginación -->
+                        <div class="row mt-3">
+                            <div class="col-sm-5">
+                                <div class="dataTables_info" id="tableInfo"></div>
+                            </div>
+                            <div class="col-sm-7">
+                                <div class="dataTables_paginate paging_simple_numbers" id="tablePagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                let currentPage = 0;
+                let pageSize = 10;
+                let currentFilters = {};
+                
+                loadReportes();
+                loadFilterOptions();
+                
+                // Configurar filtros con debounce
+                $('#filterObservacion').on('input', debounce(function() {
+                    currentPage = 0;
+                    loadReportes();
+                }, 500));
+                
+                $('#filterEstado, #filterCausa, #filterEquipo, #filterUsuario').on('change', function() {
+                    currentPage = 0;
+                    loadReportes();
+                });
+                
+                // Limpiar filtros
+                $('#clearFilters').click(function() {
+                    $('#filterObservacion, #filterEstado, #filterCausa, #filterEquipo, #filterUsuario').val('');
+                    currentPage = 0;
+                    loadReportes();
+                });
+                
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = function() {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
+                function updateFilters() {
+                    currentFilters = {
+                        observacion: $('#filterObservacion').val(),
+                        estado: $('#filterEstado').val(),
+                        causaId: $('#filterCausa').val(),
+                        equipoId: $('#filterEquipo').val(),
+                        usuarioId: $('#filterUsuario').val(),
+                        page: currentPage,
+                        size: pageSize,
+                        sortBy: 'fechaCommit',
+                        sortDir: 'desc'
+                    };
+                }
+                
+                function loadReportes() {
+                    updateFilters();
+                    
+                    const params = new URLSearchParams();
+                    Object.keys(currentFilters).forEach(key => {
+                        if (currentFilters[key] !== '' && currentFilters[key] !== null && currentFilters[key] !== undefined) {
+                            params.append(key, currentFilters[key]);
+                        }
+                    });
+                    
+                    $.ajax({
+                        url: '/api/v1/reportes/search?' + params.toString(),
+                        method: 'GET',
+                        success: function(data) {
+                            updateTable(data);
+                            updatePagination(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error al cargar reportes:', error);
+                            showAlert('error', 'Error al cargar los reportes');
+                        }
+                    });
+                }
+                
+                function loadFilterOptions() {
+                    // Cargar causas
+                    $.get('/api/v1/causas/search?size=1000')
+                        .done(function(data) {
+                            const causaSelect = $('#filterCausa');
+                            data.content.forEach(causa => {
+                                causaSelect.append(`<option value="${causa.id}">${causa.nombre}</option>`);
+                            });
+                        });
+                    
+                    // TODO: Cargar equipos y usuarios cuando estén disponibles las APIs
+                }
+                
+                function updateTable(data) {
+                    const tbody = $('#reportesTableBody');
+                    tbody.empty();
+                    
+                    if (!data.content || data.content.length === 0) {
+                        tbody.append(`
+                            <tr>
+                                <td colspan="8" class="text-center text-muted">No se encontraron registros</td>
+                            </tr>
+                        `);
+                        updateInfo(0, 0, 0);
+                        return;
+                    }
+                    
+                    data.content.forEach(reporte => {
+                        const estadoBadge = formatEstado(reporte.estado);
+                        const prioridadBadge = formatPrioridad(reporte.causaPrioridad);
+                        const observacionCorta = reporte.observacion.length > 50 ? 
+                            reporte.observacion.substring(0, 50) + '...' : reporte.observacion;
+                        
+                        const botones = createActionButtons(reporte);
+                        
+                        tbody.append(`
+                            <tr>
+                                <td>${estadoBadge}</td>
+                                <td title="${reporte.observacion}">${observacionCorta}</td>
+                                <td>${reporte.causaNombre}</td>
+                                <td>${prioridadBadge}</td>
+                                <td>${reporte.equipoIdentificador || reporte.equipoNombre}</td>
+                                <td>${reporte.usuarioNombre} ${reporte.usuarioApellido}</td>
+                                <td>${new Date(reporte.fechaCommit).toLocaleDateString()}</td>
+                                <td>${botones}</td>
+                            </tr>
+                        `);
+                    });
+                    
+                    updateInfo(data.content.length, data.totalElements, data.number + 1);
+                }
+                
+                function formatEstado(estado) {
+                    const badges = {
+                        'ABIERTO': '<span class="badge badge-danger">🔴 Abierto</span>',
+                        'EN_PROCESO': '<span class="badge badge-warning">🟡 En Proceso</span>',
+                        'RESUELTO': '<span class="badge badge-success">🟢 Resuelto</span>',
+                        'CERRADO': '<span class="badge badge-secondary">⚫ Cerrado</span>'
+                    };
+                    return badges[estado] || estado;
+                }
+                
+                function formatPrioridad(prioridad) {
+                    const badges = {
+                        'BAJA': '<span class="badge badge-success">🟢 Baja</span>',
+                        'MEDIA': '<span class="badge badge-warning">🟡 Media</span>',
+                        'ALTA': '<span class="badge badge-info">🟠 Alta</span>',
+                        'CRITICA': '<span class="badge badge-danger">🔴 Crítica</span>'
+                    };
+                    return badges[prioridad] || prioridad;
+                }
+                
+                function createActionButtons(reporte) {
+                    let buttons = `<div class="btn-group" role="group">`;
+                    
+                    // Ver siempre disponible
+                    buttons += `<a href="/reportes/${reporte.id}" class="btn btn-info btn-sm" title="Ver detalles">
+                        <i class="fas fa-eye"></i>
+                    </a>`;
+                    
+                    // Editar solo si no está cerrado
+                    if (reporte.estado !== 'CERRADO') {
+                        buttons += `<a href="/reportes/${reporte.id}/editar" class="btn btn-warning btn-sm" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>`;
+                    }
+                    
+                    // Eliminar solo si está abierto
+                    if (reporte.estado === 'ABIERTO') {
+                        buttons += `<button class="btn btn-danger btn-sm" onclick="deleteReporte(${reporte.id})" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>`;
+                    }
+                    
+                    buttons += `</div>`;
+                    return buttons;
+                }
+                
+                function updatePagination(data) {
+                    const pagination = $('#tablePagination');
+                    pagination.empty();
+                    
+                    if (data.totalPages <= 1) return;
+                    
+                    const ul = $('<ul class="pagination pagination-sm justify-content-end mb-0"></ul>');
+                    
+                    // Anterior
+                    ul.append(`
+                        <li class="page-item ${data.first ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number - 1}); return false;">Anterior</a>
+                        </li>
+                    `);
+                    
+                    // Páginas
+                    const start = Math.max(0, data.number - 2);
+                    const end = Math.min(data.totalPages - 1, data.number + 2);
+                    
+                    for (let i = start; i <= end; i++) {
+                        ul.append(`
+                            <li class="page-item ${i === data.number ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i + 1}</a>
+                            </li>
+                        `);
+                    }
+                    
+                    // Siguiente
+                    ul.append(`
+                        <li class="page-item ${data.last ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number + 1}); return false;">Siguiente</a>
+                        </li>
+                    `);
+                    
+                    pagination.append(ul);
+                }
+                
+                function updateInfo(showing, total, page) {
+                    $('#tableInfo').text(`Mostrando ${showing} de ${total} registros (página ${page})`);
+                }
+                
+                window.changePage = function(page) {
+                    currentPage = page;
+                    loadReportes();
+                };
+                
+                window.deleteReporte = function(id) {
+                    if (confirm('¿Está seguro de que desea eliminar este reporte?')) {
+                        $.ajax({
+                            url: `/reportes/${id}/eliminar`,
+                            type: 'POST',
+                            success: function() {
+                                loadReportes();
+                                showAlert('success', 'Reporte eliminado exitosamente');
+                            },
+                            error: function(xhr) {
+                                showAlert('error', 'Error al eliminar el reporte');
+                            }
+                        });
+                    }
+                };
+                
+                function showAlert(type, message) {
+                    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                    
+                    const alert = $(`
+                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                            <i class="fas ${iconClass}"></i> ${message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    `);
+                    
+                    $('.content .container-fluid').prepend(alert);
+                    
+                    setTimeout(function() {
+                        alert.alert('close');
+                    }, 5000);
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

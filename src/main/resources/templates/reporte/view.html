@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Detalle del Reporte</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">
+                            Reporte #<span th:text="${reporte.id}"></span>
+                            <span th:switch="${reporte.estado.name()}" class="ml-2">
+                                <span th:case="'ABIERTO'" class="badge badge-danger">🔴 Abierto</span>
+                                <span th:case="'EN_PROCESO'" class="badge badge-warning">🟡 En Proceso</span>
+                                <span th:case="'RESUELTO'" class="badge badge-success">🟢 Resuelto</span>
+                                <span th:case="'CERRADO'" class="badge badge-secondary">⚫ Cerrado</span>
+                            </span>
+                        </h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/reportes">Reportes</a></li>
+                            <li class="breadcrumb-item active">Detalle</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <div class="row">
+                    <!-- Información Principal -->
+                    <div class="col-md-8">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-clipboard-list"></i> Información del Reporte
+                                </h3>
+                                <div class="card-tools">
+                                    <a href="/reportes" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-arrow-left"></i> Volver
+                                    </a>
+                                    <!-- Botones según estado -->
+                                    <div th:if="${reporte.estado.name() == 'ABIERTO'}" class="btn-group ml-2">
+                                        <a th:href="@{'/reportes/' + ${reporte.id} + '/editar'}" class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i> Editar
+                                        </a>
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="eliminarReporte()">
+                                            <i class="fas fa-trash"></i> Eliminar
+                                        </button>
+                                    </div>
+                                    
+                                    <div th:if="${reporte.estado.name() == 'EN_PROCESO' || reporte.estado.name() == 'RESUELTO' || reporte.estado.name() == 'CERRADO'}" class="ml-2">
+                                        <small class="text-muted">
+                                            <i class="fas fa-lock"></i> Solo lectura
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card-body">
+                                <!-- Observación -->
+                                <div class="row mb-4">
+                                    <div class="col-12">
+                                        <h5><i class="fas fa-comment-alt"></i> Observación</h5>
+                                        <div class="border rounded p-3 bg-light">
+                                            <p th:text="${reporte.observacion}" class="mb-0" style="white-space: pre-wrap;"></p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Información de Estado y Fechas -->
+                                <div class="row mb-4">
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-info-circle"></i> Estado Actual</h6>
+                                        <div th:switch="${reporte.estado.name()}">
+                                            <div th:case="'ABIERTO'" class="alert alert-danger">
+                                                <i class="fas fa-exclamation-circle"></i> <strong>Abierto</strong><br>
+                                                <small>Reporte creado, pendiente de atención</small>
+                                            </div>
+                                            <div th:case="'EN_PROCESO'" class="alert alert-warning">
+                                                <i class="fas fa-cog"></i> <strong>En Proceso</strong><br>
+                                                <small>Se está trabajando en la resolución</small>
+                                            </div>
+                                            <div th:case="'RESUELTO'" class="alert alert-success">
+                                                <i class="fas fa-check-circle"></i> <strong>Resuelto</strong><br>
+                                                <small>Problema solucionado exitosamente</small>
+                                            </div>
+                                            <div th:case="'CERRADO'" class="alert alert-secondary">
+                                                <i class="fas fa-times-circle"></i> <strong>Cerrado</strong><br>
+                                                <small>Seguimiento cancelado</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <h6><i class="fas fa-calendar-alt"></i> Información Temporal</h6>
+                                        <table class="table table-sm table-borderless">
+                                            <tr>
+                                                <td><strong>Creado:</strong></td>
+                                                <td th:text="${#temporals.format(reporte.fechaCommit, 'dd/MM/yyyy HH:mm')}"></td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Activo:</strong></td>
+                                                <td>
+                                                    <span th:if="${reporte.activo}" class="badge badge-success">Sí</span>
+                                                    <span th:unless="${reporte.activo}" class="badge badge-danger">No</span>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Información Relacionada -->
+                    <div class="col-md-4">
+                        <!-- Causa -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-exclamation-triangle"></i> Causa
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <h6 th:text="${reporte.causaNombre}"></h6>
+                                <p th:text="${reporte.causaDescripcion}" class="text-muted mb-3"></p>
+                                
+                                <div class="text-center">
+                                    <span th:switch="${reporte.causaPrioridad}">
+                                        <span th:case="'BAJA'" class="badge badge-success badge-lg">🟢 Prioridad Baja</span>
+                                        <span th:case="'MEDIA'" class="badge badge-warning badge-lg">🟡 Prioridad Media</span>
+                                        <span th:case="'ALTA'" class="badge badge-info badge-lg">🟠 Prioridad Alta</span>
+                                        <span th:case="'CRITICA'" class="badge badge-danger badge-lg">🔴 Prioridad Crítica</span>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Equipo -->
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-laptop"></i> Equipo
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr th:if="${reporte.equipoIdentificador}">
+                                        <td><strong>ID:</strong></td>
+                                        <td th:text="${reporte.equipoIdentificador}"></td>
+                                    </tr>
+                                    <tr th:if="${reporte.equipoNombre}">
+                                        <td><strong>Nombre:</strong></td>
+                                        <td th:text="${reporte.equipoNombre}"></td>
+                                    </tr>
+                                    <tr th:if="${reporte.equipoSerie}">
+                                        <td><strong>Serie:</strong></td>
+                                        <td th:text="${reporte.equipoSerie}"></td>
+                                    </tr>
+                                    <tr th:if="${reporte.equipoMarca}">
+                                        <td><strong>Marca:</strong></td>
+                                        <td th:text="${reporte.equipoMarca}"></td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                        
+                        <!-- Usuario Reportante -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-user"></i> Reportado por
+                                </h3>
+                            </div>
+                            <div class="card-body text-center">
+                                <h6 th:text="${reporte.usuarioNombre + ' ' + reporte.usuarioApellido}"></h6>
+                                <small class="text-muted">Usuario reportante</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Cambio de Estado (UX Intuitivo) -->
+                <div class="row mt-4" th:if="${reporte.estado.name() == 'ABIERTO' || reporte.estado.name() == 'EN_PROCESO'}">
+                    <div class="col-12">
+                        <div class="card border-primary">
+                            <div class="card-header bg-primary text-white">
+                                <h3 class="card-title mb-0">
+                                    <i class="fas fa-arrow-right"></i> Cambiar Estado del Reporte
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="row align-items-center">
+                                    <div class="col-md-4">
+                                        <h6>Estado Actual:</h6>
+                                        <span th:switch="${reporte.estado.name()}" class="badge badge-lg p-2">
+                                            <span th:case="'ABIERTO'" class="badge badge-danger">🔴 ABIERTO</span>
+                                            <span th:case="'EN_PROCESO'" class="badge badge-warning">🟡 EN PROCESO</span>
+                                        </span>
+                                    </div>
+                                    <div class="col-md-8">
+                                        <h6>Acciones:</h6>
+                                        <div class="btn-group" role="group">
+                                            <!-- Desde ABIERTO -->
+                                            <div th:if="${reporte.estado.name() == 'ABIERTO'}">
+                                                <form th:action="@{'/reportes/' + ${reporte.id} + '/cambiar-estado'}" method="post" class="d-inline">
+                                                    <input type="hidden" name="nuevoEstado" value="EN_PROCESO">
+                                                    <button type="submit" class="btn btn-warning btn-lg mr-2" 
+                                                            onclick="return confirm('¿Tomar este reporte en proceso?')">
+                                                        🟡 Tomar en Proceso
+                                                    </button>
+                                                </form>
+                                            </div>
+                                            
+                                            <!-- Desde EN_PROCESO -->
+                                            <div th:if="${reporte.estado.name() == 'EN_PROCESO'}">
+                                                <form th:action="@{'/reportes/' + ${reporte.id} + '/cambiar-estado'}" method="post" class="d-inline mr-2">
+                                                    <input type="hidden" name="nuevoEstado" value="RESUELTO">
+                                                    <button type="submit" class="btn btn-success btn-lg" 
+                                                            onclick="return confirm('¿Confirmar que el problema fue resuelto?')">
+                                                        🟢 Marcar Resuelto
+                                                    </button>
+                                                </form>
+                                                
+                                                <form th:action="@{'/reportes/' + ${reporte.id} + '/cambiar-estado'}" method="post" class="d-inline">
+                                                    <input type="hidden" name="nuevoEstado" value="CERRADO">
+                                                    <button type="submit" class="btn btn-secondary btn-lg" 
+                                                            onclick="return confirm('¿Cerrar este reporte sin resolver? Esta acción no se puede deshacer.')">
+                                                        ⚫ Cerrar Sin Resolver
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Ayuda contextual -->
+                                <div class="mt-3 p-3 bg-light rounded">
+                                    <div th:if="${reporte.estado.name() == 'ABIERTO'}">
+                                        <i class="fas fa-info-circle text-primary"></i>
+                                        <strong>Siguiente paso:</strong> Tomar el reporte "En Proceso" indica que alguien está trabajando en la solución.
+                                    </div>
+                                    <div th:if="${reporte.estado.name() == 'EN_PROCESO'}">
+                                        <i class="fas fa-info-circle text-warning"></i>
+                                        <strong>Finalizar:</strong> 
+                                        • "Resuelto" = El problema fue solucionado<br>
+                                        • "Cerrado" = Se cancela el seguimiento (no se pudo resolver)
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Acciones -->
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-tools"></i> Otras Acciones
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="btn-group" role="group">
+                                    <a href="/reportes" class="btn btn-secondary">
+                                        <i class="fas fa-list"></i> Ver Todos los Reportes
+                                    </a>
+                                    
+                                    <div th:if="${reporte.estado.name() != 'CERRADO'}">
+                                        <a th:href="@{'/reportes/' + ${reporte.id} + '/editar'}" class="btn btn-warning">
+                                            <i class="fas fa-edit"></i> Editar Reporte
+                                        </a>
+                                    </div>
+                                    
+                                    <div th:if="${reporte.estado.name() == 'ABIERTO'}">
+                                        <form th:action="@{'/reportes/' + ${reporte.id} + '/eliminar'}" method="post" class="d-inline">
+                                            <button type="submit" class="btn btn-danger" 
+                                                    onclick="return confirm('¿Está seguro de que desea eliminar este reporte?')">
+                                                <i class="fas fa-trash"></i> Eliminar Reporte
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3">
+                                    <small class="text-muted">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span th:if="${reporte.estado.name() == 'CERRADO'}">
+                                            Este reporte está cerrado y no se puede modificar.
+                                        </span>
+                                        <span th:if="${reporte.estado.name() == 'ABIERTO'}">
+                                            Solo los reportes abiertos se pueden eliminar.
+                                        </span>
+                                        <span th:if="${reporte.estado.name() != 'ABIERTO' && reporte.estado.name() != 'CERRADO'}">
+                                            Este reporte está en proceso y no se puede eliminar.
+                                        </span>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                // Scroll suave para enlaces internos
+                $('a[href^="#"]').on('click', function(event) {
+                    var target = $(this.getAttribute('href'));
+                    if( target.length ) {
+                        event.preventDefault();
+                        $('html, body').stop().animate({
+                            scrollTop: target.offset().top - 100
+                        }, 500);
+                    }
+                });
+                
+                // Auto-resize para observaciones largas
+                const observacionDiv = $('.border.rounded.p-3.bg-light');
+                if (observacionDiv.height() > 200) {
+                    observacionDiv.css('max-height', '200px')
+                                 .css('overflow-y', 'auto')
+                                 .after('<small class="text-muted d-block mt-1"><i class="fas fa-scroll"></i> Scroll para ver más</small>');
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

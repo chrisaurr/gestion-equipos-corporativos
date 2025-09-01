@@ -1,5 +1,6 @@
 package com.gestion.equipos.entity;
 
+import com.gestion.equipos.config.PostgreSQLEnumJdbcType;
 import com.gestion.equipos.entity.enums.Alimentacion;
 import com.gestion.equipos.entity.enums.EstadoEquipo;
 import com.gestion.equipos.entity.enums.TipoEquipo;
@@ -9,6 +10,7 @@ import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -56,23 +58,26 @@ public class Equipo {
     
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_equipo", nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "tipo_equipo", nullable = false, columnDefinition = "tipo_equipo")
     private TipoEquipo tipoEquipo;
     
     @Enumerated(EnumType.STRING)
-    @Column(name = "tipo_alimentacion", columnDefinition = "varchar(20) default 'NINGUNA'")
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "tipo_alimentacion", columnDefinition = "alimentacion")
     private Alimentacion tipoAlimentacion = Alimentacion.NINGUNA;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_empleado")
-    private Empleado idEmpleado;
+    @JoinColumn(name = "id_usuario")
+    private Usuario idUsuario;
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "id_ubicacion")
     private Ubicacion idUbicacion;
     
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(20) default 'ACTIVO'")
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "estado", columnDefinition = "estado_equipo")
     private EstadoEquipo estado = EstadoEquipo.ACTIVO;
     
     @NotNull

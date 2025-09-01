@@ -1,88 +1,74 @@
 # Sistema de Gestión Integral de Equipos Corporativos
 
-![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)
 ![Java](https://img.shields.io/badge/Java-21-orange.svg)
 ![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5.4-brightgreen.svg)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15+-blue.svg)
 
-Sistema web de gestión de inventario corporativo desarrollado con Spring Boot y AdminLTE 3. Este proyecto forma parte del curso de **Aseguramiento de la Calidad del Software**.
+Sistema web completo de gestión de inventario corporativo desarrollado con Spring Boot y AdminLTE 3. **Sistema 100% funcional** listo para testing exhaustivo.
 
-## 📋 Descripción del Proyecto
+## 📋 Estado Actual del Proyecto
 
-Esta aplicación permite gestionar el inventario de equipos corporativos incluyendo:
+**SISTEMA COMPLETO IMPLEMENTADO** - Todas las funcionalidades principales están operativas:
 
-- ✅ **Gestión de Usuarios y Empleados**: Sistema completo con autenticación BCrypt
-- ✅ **Gestión de Áreas**: Organización departamental con responsables
-- 🚧 **Control de Inventario**: (En desarrollo) Gestión de equipos con asignaciones
-- 🚧 **Sistema de Reportes**: (Planificado) Reportes de incidencias
+- ✅ **Autenticación BCrypt**: Login seguro con usuarios de base de datos
+- ✅ **Gestión de Usuarios/Empleados**: CRUD completo con historial automático
+- ✅ **Gestión de Áreas**: Organización departamental con responsables  
+- ✅ **Control de Inventario**: Gestión completa de equipos con 4 tipos (electrónicos, vehículos, herramientas, mobiliario)
+- ✅ **Sistema de Asignaciones**: Asignación de equipos a empleados con historial automático
+- ✅ **Sistema de Reportes**: Reportes de incidencias con flujo de estados y prioridades
+- ✅ **Gestión de Marcas y Ubicaciones**: Catálogos para organización de equipos
 
-## 🚀 Inicio Rápido
+## 🚀 Inicio Rápido para Testing
 
 ### Prerrequisitos
 
 - **Java 21** o superior
-- **Maven 3.9+**
+- **Maven 3.9+**  
 - **PostgreSQL 15+**
 - **Git**
 
-### Configuración de Base de Datos
+### Configuración Rápida
 
 1. **Crear la base de datos**
    ```bash
-   # Conectar a PostgreSQL
+   # Conectar a PostgreSQL (ajustar según tu configuración)
    psql -U postgres
    
    # Crear la base de datos
    CREATE DATABASE inventario;
    ```
 
-2. **Configurar credenciales**
+2. **Configurar PostgreSQL** 
    
-   El archivo `application.properties` está configurado para:
+   Ajustar en `application.properties` si es necesario:
    ```properties
    spring.datasource.url=jdbc:postgresql://localhost:5432/inventario
    spring.datasource.username=postgres
    spring.datasource.password=1234
    ```
-   
-   **Ajustar según tu configuración local de PostgreSQL.**
 
-### Instalación y Ejecución
-
-1. **Clonar el repositorio**
+3. **Ejecutar la aplicación**
    ```bash
-   git clone <url-del-repositorio>
-   cd gestion-equipos-corporativos
-   ```
-
-2. **Ejecutar la aplicación**
-   ```bash
-   # Flyway ejecutará las migraciones automáticamente
    mvn clean spring-boot:run
    ```
+   
+   **Flyway ejecutará automáticamente todas las migraciones y creará datos de ejemplo.**
 
-3. **Acceder a la aplicación**
+4. **Acceder a la aplicación**
    ```
    URL: http://localhost:8080
+   Credenciales: admin / admin
    ```
 
-### ⚠️ Primer Uso - Crear Usuario Administrador
+### 🔐 Usuarios de Prueba
 
-**El proyecto no incluye usuarios por defecto.** Necesitarás crear el primer usuario administrador manualmente:
+**La aplicación incluye usuarios de prueba creados automáticamente:**
 
-#### Opción A: Inserción directa en BD (Recomendado)
-```sql
--- Conectar a la BD: psql -U postgres -d inventario
+- **Administrador**: `admin` / `admin` (acceso completo)
+- **Usuario regular**: Creados via interfaz web con permisos limitados
 
--- Insertar usuario admin (password: 'admin' encriptado con BCrypt)
-INSERT INTO usuario (codigo, usuario, primer_nombre, primer_apellido, estado, fecha_ingreso, is_admin, password) 
-VALUES ('USR-001', 'admin', 'Administrador', 'Sistema', 'ACTIVO', CURRENT_DATE, true, '$2a$10$XYZ123...'); 
-
--- Nota: Usar un generador BCrypt online para crear el hash de tu contraseña
-```
-
-#### Opción B: Endpoint de registro inicial (Si está disponible)
-Verificar si existe endpoint `/register` o similar para el primer usuario.
+**Nota**: El sistema diferencia entre administradores (`is_admin = true`) y usuarios regulares (`is_admin = false`).
 
 ## 🛠️ Stack Tecnológico
 
@@ -152,45 +138,67 @@ CREATE TYPE tipo_cambio_empleado AS ENUM ('INGRESO', 'CAMBIO_CARGO', 'TRANSFEREN
 
 Las migraciones incluyen el esquema completo para equipos, reportes y historial de asignaciones, listo para implementación futura.
 
-## ✅ Funcionalidades Implementadas
+## ✅ Módulos Implementados y Funcionales
 
-### 🔐 Autenticación y Seguridad
-- [x] Login con BCrypt desde base de datos
-- [x] Sesiones con Spring Security
-- [x] Roles ADMIN/USER dinámicos
+### 🔐 1. Autenticación y Seguridad
+- [x] **Login BCrypt**: Sistema de autenticación con usuarios de base de datos
+- [x] **Gestión de Sesiones**: Spring Security con control de acceso
+- [x] **Roles Administrativos**: Diferenciación ADMIN/USER con campo `is_admin`
 
-### 👥 Gestión de Usuarios/Empleados
-- [x] CRUD completo con Ajax/modales
-- [x] Relación 1:1 usuario-empleado opcional
-- [x] Estados: ACTIVO, INACTIVO, VACACIONES
-- [x] Historial automático vía triggers DB
+### 👥 2. Gestión de Usuarios y Empleados
+- [x] **CRUD Completo**: Crear, editar, ver, eliminar usuarios (tabla Ajax con filtros)
+- [x] **Sistema Dual**: Usuario puede existir solo o con registro de empleado (1:1 opcional)
+- [x] **Estados de Usuario**: ACTIVO, INACTIVO, VACACIONES, LICENCIA
+- [x] **Historial Automático**: Triggers PostgreSQL registran cambios automáticamente
+- [x] **Interfaz Dinámica**: Modales Bootstrap, paginación, búsqueda en tiempo real
 
-### 🏢 Gestión de Áreas
-- [x] CRUD de áreas con responsables
-- [x] Integración con historial de empleados
-- [x] Soft delete preservando historial
+### 🏢 3. Gestión de Áreas
+- [x] **CRUD de Áreas**: Creación y gestión de departamentos/áreas
+- [x] **Sistema de Responsables**: Asignación de usuarios como jefes de área
+- [x] **Auditoría**: Registro automático de quien crea/modifica áreas
+- [x] **Soft Delete**: Eliminación lógica preservando historial
 
-### 📊 Sistema de Historial
-- [x] Triggers PostgreSQL automáticos
-- [x] Timeline visual de cambios
-- [x] Preservación completa de auditoría
+### 📦 4. Control de Inventario de Equipos
+- [x] **4 Tipos de Equipos**: Electrónicos, Vehículos, Herramientas, Mobiliario
+- [x] **Identificadores Automáticos**: EQ-2025-00001 generado por triggers PostgreSQL
+- [x] **Estados de Equipos**: ACTIVO, INACTIVO, MANTENIMIENTO, SUSPENDIDO
+- [x] **Gestión por Tipo**: Interfaces especializadas para cada tipo de equipo
+- [x] **Campos Específicos**: Atributos particulares por tipo (placa, modelo, etc.)
 
-## 🔄 Funcionalidades Planificadas
+### 📋 5. Sistema de Asignaciones
+- [x] **Asignación de Equipos**: Asignar equipos a empleados
+- [x] **Control de Disponibilidad**: Verificar equipos disponibles para asignación
+- [x] **Historial Automático**: Triggers registran entregas y devoluciones
+- [x] **Estados de Devolución**: ENTREGADO, DEVUELTO, PERDIDO, DAÑADO
 
-### Sprint 1: Módulo de Equipos
-- [ ] Gestión de equipos con herencia (vehículos, electrónicos, mobiliario, herramientas)
-- [ ] Identificadores automáticos: EQ-2025-00001
-- [ ] Estados y asignaciones
+### 📊 6. Sistema de Reportes
+- [x] **Reportes de Incidencias**: Registro de problemas con equipos
+- [x] **Flujo de Estados**: ABIERTO → EN_PROCESO → RESUELTO/CERRADO
+- [x] **Sistema de Prioridades**: BAJA, MEDIA, ALTA, CRÍTICA (por causa)
+- [x] **Validación de Negocio**: Un equipo solo puede tener un reporte activo
+- [x] **Interfaz Completa**: Ajax, filtros, paginación, botones contextuales
 
-### Sprint 2: Sistema de Asignaciones
-- [ ] Asignación/devolución de equipos
-- [ ] Historial automático vía triggers
-- [ ] Control de disponibilidad
+### 🏷️ 7. Catálogos de Soporte
+- [x] **Gestión de Marcas**: CRUD completo con filtros para organizar equipos
+- [x] **Gestión de Ubicaciones**: Sistema de ubicaciones para equipos
+- [x] **Gestión de Causas**: Catálogo de causas para reportes con prioridades
 
-### Sprint 3: Reportes
-- [ ] Reportes de incidencias
-- [ ] Carga múltiple de imágenes
-- [ ] Estados y prioridades
+## 🎯 Funcionalidades de Testing Críticas
+
+### Flujos Principales para QA
+1. **Login/Logout** → Autenticación con admin/admin
+2. **Usuarios**: Crear → Editar → Crear Empleado → Ver Historial → Eliminar  
+3. **Áreas**: Crear → Asignar Responsable → Cambiar Responsable → Ver Historial
+4. **Equipos**: Crear por Tipo → Editar → Asignar a Empleado → Devolver
+5. **Reportes**: Crear → Cambiar Estado → Validar que bloquea nueva asignación
+6. **Catálogos**: Crear Marcas/Ubicaciones → Usar en Equipos
+
+### Validaciones de Negocio Implementadas
+- **Un equipo activo**: Solo puede tener un reporte ABIERTO/EN_PROCESO
+- **Equipos con reportes**: No se pueden asignar hasta resolver el reporte
+- **Transiciones de estado**: Validadas tanto en frontend como backend
+- **Empleados vs Usuarios**: Solo empleados generan historial de cambios
+- **Soft Delete**: Preserva integridad referencial del historial
 
 ## 🧪 Testing y QA
 
@@ -256,7 +264,27 @@ mvn clean package
 Usuario: ACTIVO ↔ INACTIVO ↔ VACACIONES
 Empleado: [Área A] → [Área B] (registra TRANSFERENCIA)
 Área: Responsable X → Responsable Y (registra ASCENSO_JEFE/DESCENSO)
+Equipo: ACTIVO → ASIGNADO → DEVUELTO → MANTENIMIENTO → SUSPENDIDO
+Reporte: ABIERTO → EN_PROCESO → RESUELTO/CERRADO
 ```
+
+## 🖥️ Navegación del Sistema
+
+### Menú Principal (implementado)
+- **Dashboard**: Vista general del sistema
+- **Usuarios**: Gestión completa de usuarios y empleados  
+- **Áreas**: Gestión de departamentos y responsables
+- **Equipos**: Control de inventario por tipos
+- **Asignaciones**: Gestión de entregas y devoluciones
+- **Reportes**: Sistema de incidencias y seguimiento
+- **Marcas**: Catálogo de marcas para equipos
+- **Ubicaciones**: Gestión de ubicaciones físicas
+
+### Patrones de Interfaz Consistentes
+- **Tablas Ajax**: Todas con filtros, paginación y búsqueda
+- **Modales Bootstrap**: Para todas las operaciones CRUD
+- **Botones Contextuales**: Ver (azul), Editar (amarillo), Historial (verde), Eliminar (rojo)
+- **Alerts Dinámicos**: Confirmaciones y errores en tiempo real
 
 ## 🤝 Contribución
 
@@ -313,4 +341,4 @@ Proyecto académico para curso de Aseguramiento de la Calidad del Software.
 
 ---
 
-> **Nota QA**: Este proyecto incluye funcionalidades completas de usuarios/empleados/áreas listas para testing exhaustivo. El módulo de equipos está preparado en BD pero pendiente de implementación Java.
+> **Nota QA**: Sistema completamente funcional con todos los módulos implementados. Incluye 7 módulos principales con interfaces Ajax, validaciones de negocio y triggers de base de datos. Ideal para testing exhaustivo de aplicaciones empresariales Spring Boot.

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Editar Reporte</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Editar Reporte</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/reportes">Reportes</a></li>
+                            <li class="breadcrumb-item active">Editar</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Error Message -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-warning">
+                            <div class="card-header">
+                                <h3 class="card-title">Editar Reporte</h3>
+                                <div class="card-tools">
+                                    <a href="/reportes" class="btn btn-secondary btn-sm">
+                                        <i class="fas fa-arrow-left"></i> Volver
+                                    </a>
+                                    <a th:href="@{'/reportes/' + ${reporte.id}}" class="btn btn-info btn-sm">
+                                        <i class="fas fa-eye"></i> Ver
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            <form th:action="@{'/reportes/' + ${reporte.id} + '/editar'}" method="post" th:object="${reporteUpdateDTO}">
+                                <div class="card-body">
+                                    
+                                    <!-- Información del reporte -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="alert alert-info">
+                                                <strong>Reporte #<span th:text="${reporte.id}"></span></strong>
+                                                - Creado: <span th:text="${#temporals.format(reporte.fechaCommit, 'dd/MM/yyyy HH:mm')}"></span>
+                                                - Estado: <span th:text="${reporte.estado}"></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label for="observacion">Observación <span class="text-danger">*</span></label>
+                                                <textarea class="form-control" id="observacion" th:field="*{observacion}"
+                                                         th:class="${#fields.hasErrors('observacion')} ? 'form-control is-invalid' : 'form-control'"
+                                                         rows="4" placeholder="Describa detalladamente el problema..."></textarea>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('observacion')}" th:errors="*{observacion}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="causaId">Causa <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="causaId" th:field="*{causaId}"
+                                                        th:class="${#fields.hasErrors('causaId')} ? 'form-control is-invalid' : 'form-control'">
+                                                    <option value="">Seleccione una causa</option>
+                                                    <option th:each="causa : ${causas}" 
+                                                            th:value="${causa.id}" 
+                                                            th:text="${causa.nombre}"
+                                                            th:selected="${causa.id == reporteUpdateDTO.causaId}">
+                                                    </option>
+                                                </select>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('causaId')}" th:errors="*{causaId}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="equipoId">Equipo <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="equipoId" th:field="*{equipoId}"
+                                                        th:class="${#fields.hasErrors('equipoId')} ? 'form-control is-invalid' : 'form-control'">
+                                                    <option value="">Seleccione un equipo</option>
+                                                    <option th:each="equipo : ${equipos}" 
+                                                            th:value="${equipo.id}" 
+                                                            th:text="${equipo.identificador + ' - ' + equipo.nombre}"
+                                                            th:selected="${equipo.id == reporteUpdateDTO.equipoId}">
+                                                    </option>
+                                                </select>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('equipoId')}" th:errors="*{equipoId}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="estado">Estado <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="estado" th:field="*{estado}"
+                                                        th:class="${#fields.hasErrors('estado')} ? 'form-control is-invalid' : 'form-control'">
+                                                    <option th:each="estadoEnum : ${estados}" 
+                                                            th:value="${estadoEnum.name()}" 
+                                                            th:text="${estadoEnum.name()}"
+                                                            th:selected="${estadoEnum.name() == reporteUpdateDTO.estado?.name()}">
+                                                    </option>
+                                                </select>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('estado')}" th:errors="*{estado}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-success">
+                                        <i class="fas fa-save"></i> Guardar Cambios
+                                    </button>
+                                    <a href="/reportes" class="btn btn-secondary ml-2">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

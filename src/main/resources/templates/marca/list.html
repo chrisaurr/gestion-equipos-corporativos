@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Gestión de Marcas</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Gestión de Marcas</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Marcas</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Lista de Marcas</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-primary btn-sm" 
+                                    data-toggle="modal" data-target="#createModal">
+                                <i class="fas fa-plus"></i> Nueva Marca
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Tabla con filtros inline -->
+                        <div class="table-responsive">
+                            <table id="marcasTable" class="table table-bordered table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                    <!-- Fila de filtros -->
+                                    <tr class="filter-row">
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterNombre" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <button type="button" class="btn btn-secondary btn-sm btn-block" id="clearFilters">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="marcasTableBody">
+                                    <!-- Contenido se llena dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Información y paginación -->
+                        <div class="row mt-3">
+                            <div class="col-sm-5">
+                                <div class="dataTables_info" id="tableInfo"></div>
+                            </div>
+                            <div class="col-sm-7">
+                                <div class="dataTables_paginate paging_simple_numbers" id="tablePagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="modals">
+        <!-- Incluir modales desde archivos separados -->
+        <div th:insert="~{marca/list-partials/create-modal}"></div>
+        <div th:insert="~{marca/list-partials/edit-modal}"></div>
+        <div th:insert="~{marca/list-partials/view-modal}"></div>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                let currentPage = 0;
+                let pageSize = 10;
+                let currentFilters = {};
+                
+                // Cargar datos iniciales
+                loadMarcas();
+                
+                // Configurar filtros con debounce
+                $('.filter-input').on('input change', debounce(function() {
+                    currentPage = 0;
+                    updateFilters();
+                    loadMarcas();
+                }, 500));
+                
+                // Limpiar filtros
+                $('#clearFilters').click(function() {
+                    $('.filter-input').val('');
+                    currentPage = 0;
+                    currentFilters = {};
+                    loadMarcas();
+                });
+                
+                // Formularios de modales
+                setupModals();
+                
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = function() {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
+                function updateFilters() {
+                    currentFilters = {
+                        nombre: $('#filterNombre').val(),
+                        page: currentPage,
+                        size: pageSize,
+                        sortBy: 'nombre',
+                        sortDir: 'asc'
+                    };
+                }
+                
+                function loadMarcas() {
+                    updateFilters();
+                    
+                    // Limpiar parámetros vacíos
+                    const params = new URLSearchParams();
+                    Object.keys(currentFilters).forEach(key => {
+                        if (currentFilters[key] !== '' && currentFilters[key] !== null && currentFilters[key] !== undefined) {
+                            params.append(key, currentFilters[key]);
+                        }
+                    });
+                    
+                    $.ajax({
+                        url: '/api/v1/marcas/search?' + params.toString(),
+                        method: 'GET',
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function(data) {
+                            updateTable(data);
+                            updatePagination(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error al cargar marcas:', error);
+                            showAlert('error', 'Error al cargar las marcas');
+                        }
+                    });
+                }
+                
+                function updateTable(data) {
+                    const tbody = $('#marcasTableBody');
+                    tbody.empty();
+                    
+                    if (!data.content || data.content.length === 0) {
+                        tbody.append(`
+                            <tr>
+                                <td colspan="2" class="text-center text-muted">No se encontraron registros</td>
+                            </tr>
+                        `);
+                        updateInfo(0, 0, 0);
+                        return;
+                    }
+                    
+                    data.content.forEach(marca => {
+                        tbody.append(`
+                            <tr>
+                                <td>${marca.nombre}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-info btn-sm" onclick="viewMarca(${marca.id})" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" onclick="editMarca(${marca.id})" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteMarca(${marca.id})" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    
+                    updateInfo(data.content.length, data.totalElements, data.number + 1);
+                }
+                
+                function updatePagination(data) {
+                    const pagination = $('#tablePagination');
+                    pagination.empty();
+                    
+                    if (data.totalPages <= 1) return;
+                    
+                    const ul = $('<ul class="pagination pagination-sm justify-content-end mb-0"></ul>');
+                    
+                    // Anterior
+                    ul.append(`
+                        <li class="page-item ${data.first ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number - 1}); return false;">Anterior</a>
+                        </li>
+                    `);
+                    
+                    // Páginas
+                    const start = Math.max(0, data.number - 2);
+                    const end = Math.min(data.totalPages - 1, data.number + 2);
+                    
+                    for (let i = start; i <= end; i++) {
+                        ul.append(`
+                            <li class="page-item ${i === data.number ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i + 1}</a>
+                            </li>
+                        `);
+                    }
+                    
+                    // Siguiente
+                    ul.append(`
+                        <li class="page-item ${data.last ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number + 1}); return false;">Siguiente</a>
+                        </li>
+                    `);
+                    
+                    pagination.append(ul);
+                }
+                
+                function updateInfo(showing, total, page) {
+                    $('#tableInfo').text(`Mostrando ${showing} de ${total} registros (página ${page})`);
+                }
+                
+                window.changePage = function(page) {
+                    currentPage = page;
+                    loadMarcas();
+                };
+                
+                window.viewMarca = function(id) {
+                    $.get(`/api/v1/marcas/${id}`)
+                        .done(function(marca) {
+                            $('#viewId').text(marca.id);
+                            $('#viewNombre').text(marca.nombre);
+                            $('#viewEstado').html(marca.activo ? 
+                                '<span class="badge badge-success">Activo</span>' : 
+                                '<span class="badge badge-danger">Inactivo</span>');
+                            $('#viewCreadoPor').text(marca.creadoPor || '');
+                            $('#viewFecha').text(marca.fechaCommit ? 
+                                new Date(marca.fechaCommit).toLocaleString() : '');
+                            
+                            $('#viewModal').modal('show');
+                        });
+                };
+                
+                window.editMarca = function(id) {
+                    $.get(`/api/v1/marcas/${id}`)
+                        .done(function(marca) {
+                            $('#editId').val(marca.id);
+                            $('#editNombre').val(marca.nombre);
+                            
+                            $('#editModal').modal('show');
+                        });
+                };
+                
+                window.deleteMarca = function(id) {
+                    if (confirm('¿Está seguro de que desea eliminar esta marca?')) {
+                        $.ajax({
+                            url: `/marcas/${id}`,
+                            type: 'DELETE',
+                            success: function(response) {
+                                if (response === 'success') {
+                                    loadMarcas();
+                                    showAlert('success', 'Marca eliminada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            },
+                            error: function() {
+                                showAlert('error', 'Error al eliminar la marca');
+                            }
+                        });
+                    }
+                };
+                
+                function setupModals() {
+                    // Formulario crear
+                    $('#createForm').on('submit', function(e) {
+                        e.preventDefault();
+                        
+                        $.post('/marcas', $(this).serialize())
+                            .done(function(response) {
+                                if (response === 'success') {
+                                    $('#createModal').modal('hide');
+                                    $('#createForm')[0].reset();
+                                    loadMarcas();
+                                    showAlert('success', 'Marca creada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            })
+                            .fail(function() {
+                                showAlert('error', 'Error al crear la marca');
+                            });
+                    });
+                    
+                    // Formulario editar
+                    $('#editForm').on('submit', function(e) {
+                        e.preventDefault();
+                        const id = $('#editId').val();
+                        
+                        $.ajax({
+                            url: '/marcas/' + id,
+                            type: 'PUT',
+                            data: $(this).serialize(),
+                            success: function(response) {
+                                if (response === 'success') {
+                                    $('#editModal').modal('hide');
+                                    loadMarcas();
+                                    showAlert('success', 'Marca actualizada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            },
+                            error: function() {
+                                showAlert('error', 'Error al actualizar la marca');
+                            }
+                        });
+                    });
+                }
+                
+                function showAlert(type, message) {
+                    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                    
+                    const alert = $(`
+                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                            <i class="fas ${iconClass}"></i> ${message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    `);
+                    
+                    $('.content .container-fluid').prepend(alert);
+                    
+                    setTimeout(function() {
+                        alert.alert('close');
+                    }, 5000);
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

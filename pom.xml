@@ -10,7 +10,7 @@
     </parent>
     <groupId>com.gestion.equipos</groupId>
     <artifactId>gestion-equipos-corporativos</artifactId>
-    <version>0.1.0</version>
+    <version>1.0.0</version>
     <name>gestion-equipos-corporativos</name>
     <description>Sistema de Gestión Integral de Equipos Corporativos</description>
     <properties>
