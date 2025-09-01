@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Historial de Asignaciones</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Historial de Asignaciones</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/equipos">Equipos</a></li>
+                            <li class="breadcrumb-item active">Historial</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <section class="content">
+            <div class="container-fluid">
+                
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-4">
+                        <!-- Información del Equipo -->
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-laptop"></i> 
+                                    Información del Equipo
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-borderless">
+                                    <tr>
+                                        <td><strong>Identificador:</strong></td>
+                                        <td th:text="${equipo.identificador}">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Nombre:</strong></td>
+                                        <td th:text="${equipo.nombre}">-</td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Tipo:</strong></td>
+                                        <td>
+                                            <span th:switch="${equipo.tipoEquipo?.name()}">
+                                                <span th:case="VEHICULO"><i class="fas fa-car text-primary"></i> Vehículo</span>
+                                                <span th:case="ELECTRONICO"><i class="fas fa-laptop text-info"></i> Electrónico</span>
+                                                <span th:case="MOBILIARIO"><i class="fas fa-couch text-warning"></i> Mobiliario</span>
+                                                <span th:case="HERRAMIENTA"><i class="fas fa-tools text-success"></i> Herramienta</span>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Estado:</strong></td>
+                                        <td>
+                                            <span class="badge" 
+                                                  th:classappend="${equipo.estado?.name() == 'ACTIVO'} ? 'badge-success' : 
+                                                                  ${equipo.estado?.name() == 'INACTIVO'} ? 'badge-danger' : 
+                                                                  ${equipo.estado?.name() == 'MANTENIMIENTO'} ? 'badge-warning' : 'badge-dark'"
+                                                  th:text="${equipo.estado}">Estado</span>
+                                        </td>
+                                    </tr>
+                                    <tr th:if="${equipo.usuarioAsignadoNombre}">
+                                        <td><strong>Asignado a:</strong></td>
+                                        <td>
+                                            <span class="text-success">
+                                                <i class="fas fa-user-check"></i>
+                                                <span th:text="${equipo.usuarioAsignadoNombre}">Usuario</span>
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr th:unless="${equipo.usuarioAsignadoNombre}">
+                                        <td><strong>Estado:</strong></td>
+                                        <td>
+                                            <span class="text-muted">
+                                                <i class="fas fa-user-times"></i>
+                                                Equipo disponible
+                                            </span>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="card-footer">
+                                <a th:href="@{/equipos/{id}/ver(id=${equipo.id})}" class="btn btn-info btn-sm">
+                                    <i class="fas fa-eye"></i> Ver Equipo
+                                </a>
+                                <a th:href="@{/equipos}" class="btn btn-secondary btn-sm">
+                                    <i class="fas fa-arrow-left"></i> Volver
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-8">
+                        <!-- Historial de Asignaciones -->
+                        <div class="card">
+                            <div class="card-header">
+                                <h3 class="card-title">
+                                    <i class="fas fa-history"></i> 
+                                    Historial de Asignaciones
+                                </h3>
+                            </div>
+                            <div class="card-body">
+                                <div th:if="${#lists.isEmpty(historial)}" class="text-center text-muted">
+                                    <i class="fas fa-info-circle fa-3x mb-3"></i>
+                                    <p>Este equipo aún no tiene historial de asignaciones</p>
+                                </div>
+                                
+                                <div th:unless="${#lists.isEmpty(historial)}" class="timeline">
+                                    <div th:each="item : ${historial}" class="time-label">
+                                        <div class="timeline-item" th:classappend="${item.fechaDevolucion == null} ? 'timeline-item-active' : ''">
+                                            <span class="time">
+                                                <i class="fas fa-clock"></i>
+                                                <span th:text="${#temporals.format(item.fechaAsignacion, 'dd/MM/yyyy HH:mm')}">Fecha</span>
+                                            </span>
+                                            
+                                            <div class="timeline-icon" 
+                                                 th:classappend="${item.fechaDevolucion == null} ? 'bg-green' : 
+                                                                 ${item.estadoDevolucion?.name() == 'CONFIRMADA'} ? 'bg-blue' : 
+                                                                 ${item.estadoDevolucion?.name() == 'EXTRAVIADA'} ? 'bg-red' : 'bg-yellow'">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            
+                                            <div class="timeline-body">
+                                                <div class="card">
+                                                    <div class="card-header">
+                                                        <h4 class="card-title">
+                                                            <strong th:text="${item.usuarioNombre}">Usuario</strong>
+                                                            <span th:if="${item.usuarioEmpleadoArea}" class="text-muted">
+                                                                (<span th:text="${item.usuarioEmpleadoArea}">Área</span>)
+                                                            </span>
+                                                        </h4>
+                                                        <div class="card-tools">
+                                                            <span class="badge" 
+                                                                  th:classappend="${item.motivoCambio?.name() == 'ASIGNACION_INICIAL'} ? 'badge-primary' :
+                                                                                  ${item.motivoCambio?.name() == 'REASIGNACION_ADMINISTRATIVA'} ? 'badge-info' :
+                                                                                  ${item.motivoCambio?.name() == 'CAMBIO_AREA'} ? 'badge-warning' :
+                                                                                  ${item.motivoCambio?.name() == 'CAMBIO_PUESTO'} ? 'badge-secondary' :
+                                                                                  ${item.motivoCambio?.name() == 'DEVOLUCION_VOLUNTARIA'} ? 'badge-success' : 'badge-dark'"
+                                                                  th:text="${item.motivoCambio}">Motivo</span>
+                                                        </div>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <strong>Fecha Asignación:</strong><br>
+                                                                <span th:text="${#temporals.format(item.fechaAsignacion, 'dd/MM/yyyy HH:mm')}">-</span>
+                                                            </div>
+                                                            <div class="col-md-6" th:if="${item.fechaDevolucion}">
+                                                                <strong>Fecha Devolución:</strong><br>
+                                                                <span th:text="${#temporals.format(item.fechaDevolucion, 'dd/MM/yyyy HH:mm')}">-</span>
+                                                            </div>
+                                                            <div class="col-md-6" th:unless="${item.fechaDevolucion}">
+                                                                <strong>Estado:</strong><br>
+                                                                <span class="badge badge-success">Asignado Actualmente</span>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div th:if="${item.motivo}" class="mt-2">
+                                                            <strong>Motivo:</strong><br>
+                                                            <span class="text-muted" th:text="${item.motivo}">-</span>
+                                                        </div>
+                                                        
+                                                        <!-- Estado de Devolución -->
+                                                        <div th:if="${item.fechaDevolucion}" class="mt-3">
+                                                            <div class="row">
+                                                                <div class="col-md-8">
+                                                                    <strong>Estado de Devolución:</strong><br>
+                                                                    <span class="badge" 
+                                                                          th:classappend="${item.estadoDevolucion?.name() == 'PENDIENTE'} ? 'badge-warning' :
+                                                                                          ${item.estadoDevolucion?.name() == 'CONFIRMADA'} ? 'badge-success' :
+                                                                                          ${item.estadoDevolucion?.name() == 'EXTRAVIADA'} ? 'badge-danger' : 'badge-secondary'"
+                                                                          th:text="${item.estadoDevolucion}">Estado</span>
+                                                                </div>
+                                                                <div class="col-md-4" th:if="${item.estadoDevolucion?.name() == 'PENDIENTE'}">
+                                                                    <div class="btn-group btn-group-sm">
+                                                                        <button type="button" class="btn btn-success btn-xs" 
+                                                                                th:onclick="'confirmarDevolucion(' + ${item.id} + ')'">
+                                                                            <i class="fas fa-check"></i> Confirmar
+                                                                        </button>
+                                                                        <button type="button" class="btn btn-danger btn-xs" 
+                                                                                th:onclick="'marcarExtraviado(' + ${item.id} + ')'">
+                                                                            <i class="fas fa-times"></i> Extraviado
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Info de Auditoría -->
+                                                        <div class="mt-2">
+                                                            <small class="text-muted">
+                                                                Registrado por: <strong th:text="${item.creadoPor}">Sistema</strong>
+                                                            </small>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="scripts">
+        <script>
+            function confirmarDevolucion(historialId) {
+                if (confirm('¿Confirmar que la devolución del equipo fue recibida correctamente?')) {
+                    $.ajax({
+                        url: '/api/v1/equipos/' + /*[[${equipo.id}]]*/ 0 + '/historial/' + historialId + '/confirmar',
+                        method: 'POST',
+                        success: function() {
+                            location.reload();
+                        },
+                        error: function() {
+                            alert('Error al confirmar la devolución');
+                        }
+                    });
+                }
+            }
+            
+            function marcarExtraviado(historialId) {
+                if (confirm('¿Marcar este equipo como extraviado? Esta acción indica que el equipo no fue devuelto.')) {
+                    $.ajax({
+                        url: '/api/v1/equipos/' + /*[[${equipo.id}]]*/ 0 + '/historial/' + historialId + '/extraviado',
+                        method: 'POST',
+                        success: function() {
+                            location.reload();
+                        },
+                        error: function() {
+                            alert('Error al marcar como extraviado');
+                        }
+                    });
+                }
+            }
+        </script>
+    </div>
+</body>
+</html>

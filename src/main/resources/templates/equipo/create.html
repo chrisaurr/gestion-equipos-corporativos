@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Crear Equipo</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Crear Equipo</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/equipos">Equipos</a></li>
+                            <li class="breadcrumb-item active">Crear</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <section class="content">
+            <div class="container-fluid">
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card card-primary">
+                            <div class="card-header">
+                                <h3 class="card-title">Información del Equipo</h3>
+                            </div>
+                            
+                            <form th:action="@{/equipos}" method="post" th:object="${equipoCreateDTO}">
+                                <div class="card-body">
+                                    
+                                    <!-- Datos básicos del equipo -->
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label for="identificador">Identificador</label>
+                                                <input type="text" class="form-control" id="identificador" th:field="*{identificador}" placeholder="Dejar vacío para auto-generar">
+                                                <small class="form-text text-muted">Si se deja vacío, se generará automáticamente (EQ-2025-XXXXX)</small>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('identificador')}" th:errors="*{identificador}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-8">
+                                            <div class="form-group">
+                                                <label for="nombre">Nombre <span class="text-danger">*</span></label>
+                                                <input type="text" class="form-control" id="nombre" th:field="*{nombre}" 
+                                                       th:class="${#fields.hasErrors('nombre')} ? 'form-control is-invalid' : 'form-control'" 
+                                                       placeholder="Nombre del equipo" required>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="marcaId">Marca <span class="text-danger">*</span></label>
+                                                <select class="form-control" id="marcaId" th:field="*{marcaId}" 
+                                                        th:class="${#fields.hasErrors('marcaId')} ? 'form-control is-invalid' : 'form-control'" required>
+                                                    <option value="">Seleccionar marca</option>
+                                                    <option th:each="marca : ${marcas}" th:value="${marca.id}" th:text="${marca.nombre}"></option>
+                                                </select>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('marcaId')}" th:errors="*{marcaId}"></div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="form-group">
+                                                <label for="ubicacionId">Ubicación</label>
+                                                <select class="form-control" id="ubicacionId" th:field="*{ubicacionId}">
+                                                    <option value="">Seleccionar ubicación</option>
+                                                    <option th:each="ubicacion : ${ubicaciones}" th:value="${ubicacion.id}" th:text="${ubicacion.nombre}"></option>
+                                                </select>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('ubicacionId')}" th:errors="*{ubicacionId}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="color">Color</label>
+                                                <input type="text" class="form-control" id="color" th:field="*{color}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="serie">Serie</label>
+                                                <input type="text" class="form-control" id="serie" th:field="*{serie}">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="valor">Valor</label>
+                                                <input type="number" class="form-control" id="valor" th:field="*{valor}" step="0.01">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label for="tipoAlimentacion">Tipo Alimentación</label>
+                                                <select class="form-control" id="tipoAlimentacion" th:field="*{tipoAlimentacion}">
+                                                    <option th:each="alimentacion : ${alimentaciones}" 
+                                                            th:value="${alimentacion}" 
+                                                            th:text="${alimentacion}" 
+                                                            th:selected="${alimentacion == T(com.gestion.equipos.entity.enums.Alimentacion).NINGUNA}"></option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="form-group">
+                                        <label for="extras">Extras/Accesorios</label>
+                                        <textarea class="form-control" id="extras" th:field="*{extras}" rows="3" 
+                                                placeholder="Lista los accesorios incluidos (ej: cargador, cable USB, manual)"></textarea>
+                                    </div>
+
+                                    <hr>
+                                    
+                                    <!-- Radio buttons para tipo de equipo (igual que en usuario pero con radio en lugar de checkbox) -->
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <div class="form-group">
+                                                <label><strong>Tipo de Equipo <span class="text-danger">*</span></strong></label>
+                                                <div class="row">
+                                                    <div class="col-md-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" th:field="*{tipoEquipo}" id="tipoVehiculo" value="VEHICULO">
+                                                            <label class="form-check-label" for="tipoVehiculo">
+                                                                <i class="fas fa-car text-primary"></i> <strong>Vehículo</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" th:field="*{tipoEquipo}" id="tipoElectronico" value="ELECTRONICO">
+                                                            <label class="form-check-label" for="tipoElectronico">
+                                                                <i class="fas fa-laptop text-info"></i> <strong>Electrónico</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" th:field="*{tipoEquipo}" id="tipoMobiliario" value="MOBILIARIO">
+                                                            <label class="form-check-label" for="tipoMobiliario">
+                                                                <i class="fas fa-couch text-warning"></i> <strong>Mobiliario</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-3">
+                                                        <div class="form-check">
+                                                            <input class="form-check-input" type="radio" th:field="*{tipoEquipo}" id="tipoHerramienta" value="HERRAMIENTA">
+                                                            <label class="form-check-label" for="tipoHerramienta">
+                                                                <i class="fas fa-tools text-success"></i> <strong>Herramienta</strong>
+                                                            </label>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <small class="form-text text-muted">
+                                                    Seleccione el tipo de equipo para mostrar los campos específicos correspondientes
+                                                </small>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('tipoEquipo')}" th:errors="*{tipoEquipo}"></div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Sección de datos específicos por tipo (inicialmente oculta) -->
+                                    <div id="datosVehiculo" class="tipo-fields" style="display: none;">
+                                        <hr>
+                                        <h5 class="text-primary"><i class="fas fa-car"></i> Datos del Vehículo</h5>
+                                        <div class="card card-outline card-primary">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="vehiculo-noMotor">Número de Motor *</label>
+                                                            <input type="text" class="form-control" id="vehiculo-noMotor" th:field="*{vehiculo.noMotor}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="vehiculo-vin">VIN *</label>
+                                                            <input type="text" class="form-control" id="vehiculo-vin" th:field="*{vehiculo.vin}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label for="vehiculo-cilindrada">Cilindrada *</label>
+                                                            <input type="text" class="form-control" id="vehiculo-cilindrada" th:field="*{vehiculo.cilindrada}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label for="vehiculo-placa">Placa *</label>
+                                                            <input type="text" class="form-control" id="vehiculo-placa" th:field="*{vehiculo.placa}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label for="vehiculo-modelo">Modelo *</label>
+                                                            <input type="text" class="form-control" id="vehiculo-modelo" th:field="*{vehiculo.modelo}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="datosElectronico" class="tipo-fields" style="display: none;">
+                                        <hr>
+                                        <h5 class="text-info"><i class="fas fa-laptop"></i> Datos del Equipo Electrónico</h5>
+                                        <div class="card card-outline card-info">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="electronico-imei">IMEI</label>
+                                                            <input type="text" class="form-control" id="electronico-imei" th:field="*{electronico.imei}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="electronico-sistemaOperativo">Sistema Operativo</label>
+                                                            <input type="text" class="form-control" id="electronico-sistemaOperativo" th:field="*{electronico.sistemaOperativo}">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="electronico-conectividad">Conectividad</label>
+                                                            <select class="form-control" id="electronico-conectividad" th:field="*{electronico.conectividad}">
+                                                                <option th:each="conectividad : ${conectividades}" 
+                                                                        th:value="${conectividad}" 
+                                                                        th:text="${conectividad}"
+                                                                        th:selected="${conectividad == T(com.gestion.equipos.entity.enums.Conectividad).NINGUNO}"></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="electronico-operador">Operador</label>
+                                                            <select class="form-control" id="electronico-operador" th:field="*{electronico.operador}">
+                                                                <option th:each="operador : ${operadores}" 
+                                                                        th:value="${operador}" 
+                                                                        th:text="${operador}"
+                                                                        th:selected="${operador == T(com.gestion.equipos.entity.enums.Operador).NINGUNO}"></option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="datosMobiliario" class="tipo-fields" style="display: none;">
+                                        <hr>
+                                        <h5 class="text-warning"><i class="fas fa-couch"></i> Datos del Mobiliario</h5>
+                                        <div class="card card-outline card-warning">
+                                            <div class="card-body">
+                                                <div class="row">
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="mobiliario-material">Material *</label>
+                                                            <input type="text" class="form-control" id="mobiliario-material" th:field="*{mobiliario.material}">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-6">
+                                                        <div class="form-group">
+                                                            <label for="mobiliario-cantidadPiezas">Cantidad de Piezas *</label>
+                                                            <input type="number" class="form-control" id="mobiliario-cantidadPiezas" th:field="*{mobiliario.cantidadPiezas}" min="1">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="row">
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label for="mobiliario-altura">Altura (cm) *</label>
+                                                            <input type="number" class="form-control" id="mobiliario-altura" th:field="*{mobiliario.altura}" step="0.01">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label for="mobiliario-ancho">Ancho (cm) *</label>
+                                                            <input type="number" class="form-control" id="mobiliario-ancho" th:field="*{mobiliario.ancho}" step="0.01">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-md-4">
+                                                        <div class="form-group">
+                                                            <label for="mobiliario-profundidad">Profundidad (cm) *</label>
+                                                            <input type="number" class="form-control" id="mobiliario-profundidad" th:field="*{mobiliario.profundidad}" step="0.01">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div id="datosHerramienta" class="tipo-fields" style="display: none;">
+                                        <hr>
+                                        <h5 class="text-success"><i class="fas fa-tools"></i> Datos de la Herramienta</h5>
+                                        <div class="card card-outline card-success">
+                                            <div class="card-body">
+                                                <div class="form-group">
+                                                    <label for="herramienta-material">Material *</label>
+                                                    <input type="text" class="form-control" id="herramienta-material" th:field="*{herramienta.material}">
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer">
+                                    <button type="submit" class="btn btn-primary">Crear Equipo</button>
+                                    <a th:href="@{/equipos}" class="btn btn-secondary">Cancelar</a>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                console.log('Script cargado');
+                
+                // Debuggear los radio buttons
+                console.log('Radio buttons encontrados:', $('input[type="radio"]').length);
+                console.log('Radio buttons con th:field tipoEquipo:', $('input[type="radio"]').map(function() { return this.name; }).get());
+                
+                // Usar el patrón más directo posible (como en usuario/empleado)
+                $('#tipoVehiculo').change(function() {
+                    console.log('Vehículo seleccionado');
+                    if ($(this).is(':checked')) {
+                        $('.tipo-fields').slideUp();
+                        $('#datosVehiculo').slideDown();
+                        $('#vehiculo-noMotor, #vehiculo-vin, #vehiculo-cilindrada, #vehiculo-placa, #vehiculo-modelo').attr('required', true);
+                    }
+                });
+                
+                $('#tipoElectronico').change(function() {
+                    console.log('Electrónico seleccionado');
+                    if ($(this).is(':checked')) {
+                        $('.tipo-fields').slideUp();
+                        $('#datosElectronico').slideDown();
+                    }
+                });
+                
+                $('#tipoMobiliario').change(function() {
+                    console.log('Mobiliario seleccionado');
+                    if ($(this).is(':checked')) {
+                        $('.tipo-fields').slideUp();
+                        $('#datosMobiliario').slideDown();
+                        $('#mobiliario-material, #mobiliario-cantidadPiezas, #mobiliario-altura, #mobiliario-ancho, #mobiliario-profundidad').attr('required', true);
+                    }
+                });
+                
+                $('#tipoHerramienta').change(function() {
+                    console.log('Herramienta seleccionada');
+                    if ($(this).is(':checked')) {
+                        $('.tipo-fields').slideUp();
+                        $('#datosHerramienta').slideDown();
+                        $('#herramienta-material').attr('required', true);
+                    }
+                });
+                
+                // Verificar estado inicial
+                $('input[type="radio"]:checked').each(function() {
+                    console.log('Radio button checked encontrado:', this.id, this.value);
+                    $(this).trigger('change');
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

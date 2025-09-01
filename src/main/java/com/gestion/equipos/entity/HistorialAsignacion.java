@@ -1,11 +1,14 @@
 package com.gestion.equipos.entity;
 
+import com.gestion.equipos.config.PostgreSQLEnumJdbcType;
+import com.gestion.equipos.entity.enums.EstadoDevolucion;
 import com.gestion.equipos.entity.enums.MotivoCambio;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
 
 import java.time.LocalDateTime;
 
@@ -26,12 +29,12 @@ public class HistorialAsignacion {
     private Equipo idEquipo;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_empleado_anterior")
-    private Empleado idEmpleadoAnterior;
+    @JoinColumn(name = "id_usuario_anterior")
+    private Usuario idUsuarioAnterior;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_empleado_nuevo")
-    private Empleado idEmpleadoNuevo;
+    @JoinColumn(name = "id_usuario_nuevo")
+    private Usuario idUsuarioNuevo;
     
     @NotNull
     @Column(name = "fecha_asignacion", nullable = false)
@@ -42,11 +45,17 @@ public class HistorialAsignacion {
     
     @NotNull
     @Enumerated(EnumType.STRING)
-    @Column(name = "motivo_cambio", nullable = false)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "motivo_cambio", nullable = false, columnDefinition = "motivo_cambio")
     private MotivoCambio motivoCambio;
     
     @Column(columnDefinition = "text")
     private String observaciones;
+    
+    @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "estado_devolucion", columnDefinition = "estado_devolucion")
+    private EstadoDevolucion estadoDevolucion = EstadoDevolucion.PENDIENTE;
     
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

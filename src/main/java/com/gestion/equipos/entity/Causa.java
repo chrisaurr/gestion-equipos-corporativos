@@ -1,11 +1,14 @@
 package com.gestion.equipos.entity;
 
+import com.gestion.equipos.config.PostgreSQLEnumJdbcType;
+import com.gestion.equipos.entity.enums.PrioridadReporte;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
 
 import java.time.LocalDateTime;
 
@@ -30,6 +33,12 @@ public class Causa {
     
     @Column(columnDefinition = "boolean default true")
     private Boolean activo = true;
+    
+    @NotNull
+    @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "prioridad_reporte", nullable = false, columnDefinition = "prioridad_reporte")
+    private PrioridadReporte prioridadReporte;
     
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)

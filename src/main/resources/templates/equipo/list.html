@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Gestión de Equipos</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Gestión de Equipos</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Equipos</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <section class="content">
+            <div class="container-fluid">
+                
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Lista de Equipos</h3>
+                        <div class="card-tools">
+                            <a th:href="@{/equipos/crear}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-plus"></i> Nuevo Equipo
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        <!-- Filtros -->
+                        <div class="row p-3">
+                            <div class="col-md-2">
+                                <input type="text" id="filterIdentificador" class="form-control form-control-sm filter-input" placeholder="Identificador">
+                            </div>
+                            <div class="col-md-2">
+                                <input type="text" id="filterNombre" class="form-control form-control-sm filter-input" placeholder="Nombre">
+                            </div>
+                            <div class="col-md-2">
+                                <select id="filterTipo" class="form-control form-control-sm filter-input">
+                                    <option value="">Todos los tipos</option>
+                                    <option value="VEHICULO">Vehículo</option>
+                                    <option value="ELECTRONICO">Electrónico</option>
+                                    <option value="MOBILIARIO">Mobiliario</option>
+                                    <option value="HERRAMIENTA">Herramienta</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select id="filterEstado" class="form-control form-control-sm filter-input">
+                                    <option value="">Todos los estados</option>
+                                    <option value="ACTIVO">Activo</option>
+                                    <option value="INACTIVO">Inactivo</option>
+                                    <option value="MANTENIMIENTO">Mantenimiento</option>
+                                    <option value="SUSPENDIDO">Suspendido</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <select id="filterAsignado" class="form-control form-control-sm filter-input">
+                                    <option value="">Todos</option>
+                                    <option value="true">Asignados</option>
+                                    <option value="false">Libres</option>
+                                </select>
+                            </div>
+                            <div class="col-md-2">
+                                <button id="clearFilters" class="btn btn-outline-secondary btn-sm">
+                                    <i class="fas fa-times"></i> Limpiar
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Tabla -->
+                        <div class="table-responsive">
+                            <table class="table table-hover text-nowrap">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Identificador</th>
+                                        <th>Nombre</th>
+                                        <th>Tipo</th>
+                                        <th>Estado</th>
+                                        <th>Usuario Asignado</th>
+                                        <th>Estado Devolución</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="equiposTableBody">
+                                    <tr>
+                                        <td colspan="7" class="text-center">
+                                            <div class="spinner-border spinner-border-sm" role="status">
+                                                <span class="sr-only">Cargando...</span>
+                                            </div>
+                                            Cargando equipos...
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Info y Paginación -->
+                        <div class="card-footer">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div id="tableInfo">Cargando...</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <nav aria-label="Paginación equipos">
+                                        <ul id="pagination" class="pagination pagination-sm justify-content-end mb-0">
+                                        </ul>
+                                    </nav>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="script">
+        <script th:inline="javascript">
+            function waitForJQuery() {
+                if (typeof $ !== 'undefined') {
+                    initEquipos();
+                } else {
+                    setTimeout(waitForJQuery, 50);
+                }
+            }
+            
+            function initEquipos() {
+                let currentPage = 0;
+                const pageSize = 10;
+                let currentFilters = {};
+                
+                // Cargar equipos al inicio
+                loadEquipos();
+                
+                // Event listeners para filtros
+                $('.filter-input').on('input change', debounce(function() {
+                    currentPage = 0;
+                    updateFilters();
+                    loadEquipos();
+                }, 500));
+                
+                // Limpiar filtros
+                $('#clearFilters').click(function() {
+                    $('.filter-input').val('');
+                    currentPage = 0;
+                    currentFilters = {};
+                    loadEquipos();
+                });
+                
+                // Configurar modales - CRITICAL: This is like área
+                setupModals();
+                
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = function() {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
+                function updateFilters() {
+                    currentFilters = {
+                        identificador: $('#filterIdentificador').val(),
+                        nombre: $('#filterNombre').val(),
+                        tipoEquipo: $('#filterTipo').val(),
+                        estado: $('#filterEstado').val(),
+                        asignado: $('#filterAsignado').val() !== '' ? $('#filterAsignado').val() : null,
+                        page: currentPage,
+                        size: pageSize,
+                        sort: 'identificador',
+                        direction: 'asc'
+                    };
+                }
+                
+                function loadEquipos() {
+                    updateFilters();
+                    
+                    // Limpiar parámetros vacíos
+                    const params = new URLSearchParams();
+                    Object.keys(currentFilters).forEach(key => {
+                        if (currentFilters[key] !== '' && currentFilters[key] !== null && currentFilters[key] !== undefined) {
+                            params.append(key, currentFilters[key]);
+                        }
+                    });
+                    
+                    $.ajax({
+                        url: '/api/v1/equipos?' + params.toString(),
+                        method: 'GET',
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function(data) {
+                            renderTable(data.content);
+                            renderPagination(data);
+                            updateTableInfo(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error cargando equipos:', error);
+                            showAlert('Error cargando datos: ' + error, 'danger');
+                        }
+                    });
+                }
+                
+                function renderTable(equipos) {
+                    const tbody = $('#equiposTableBody');
+                    tbody.empty();
+                    
+                    if (equipos.length === 0) {
+                        tbody.append('<tr><td colspan="7" class="text-center">No se encontraron equipos</td></tr>');
+                        return;
+                    }
+                    
+                    const promises = equipos.map(equipo => {
+                        return Promise.all([
+                            checkPendingReturn(equipo.id),
+                            checkOpenReports(equipo.id)
+                        ]).then(([pendingReturn, hasOpenReports]) => {
+                            return { equipo, pendingReturn, hasOpenReports };
+                        });
+                    });
+                    
+                    Promise.all(promises).then(results => {
+                        results.forEach(({ equipo, pendingReturn, hasOpenReports }) => {
+                            let usuarioAsignadoText = equipo.usuarioAsignadoNombre || '<span class="text-muted">Sin asignar</span>';
+                            let estadoDevolucionText = '<span class="text-muted">-</span>';
+                            let assignmentButtons = '';
+                            
+                            if (pendingReturn) {
+                                usuarioAsignadoText += ' <span class="badge badge-warning">📋 Devolución Pendiente</span>';
+                                estadoDevolucionText = `<span class="badge badge-warning">PENDIENTE</span>`;
+                                assignmentButtons = `
+                                    <button type="button" class="btn btn-success btn-sm" onclick="confirmarDevolucion(${equipo.id}, ${pendingReturn.id})" title="Confirmar Devolución">
+                                        <i class="fas fa-check"></i>
+                                    </button>
+                                `;
+                            } else if (hasOpenReports) {
+                                usuarioAsignadoText += ' <span class="badge badge-info">📝 Con Reportes</span>';
+                                assignmentButtons = '<span class="text-muted">Reportes pendientes</span>';
+                            } else if (!equipo.usuarioAsignadoId) {
+                                assignmentButtons = `
+                                    <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalAsignacion(${equipo.id}, '${equipo.nombre}')" title="Asignar">
+                                        <i class="fas fa-user-plus"></i>
+                                    </button>
+                                `;
+                            } else {
+                                assignmentButtons = `
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="abrirModalLiberacion(${equipo.id}, '${equipo.nombre}')" title="Liberar">
+                                        <i class="fas fa-user-minus"></i>
+                                    </button>
+                                `;
+                            }
+                            
+                            const row = `
+                                <tr>
+                                    <td>${equipo.identificador}</td>
+                                    <td>${equipo.nombre}</td>
+                                    <td>${formatTipoEquipo(equipo.tipoEquipo)}</td>
+                                    <td>
+                                        <span class="badge ${getEstadoBadge(equipo.estado)}">${equipo.estado}</span>
+                                    </td>
+                                    <td>${usuarioAsignadoText}</td>
+                                    <td>${estadoDevolucionText}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/equipos/${equipo.id}" class="btn btn-info btn-sm" title="Ver">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="/equipos/${equipo.id}/editar" class="btn btn-warning btn-sm" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button" class="btn btn-success btn-sm" title="Ver Historial" 
+                                                    onclick="viewHistory(${equipo.id}, '${equipo.nombre}')">
+                                                <i class="fas fa-history"></i>
+                                            </button>
+                                            ${assignmentButtons}
+                                            <button type="button" class="btn btn-danger btn-sm" onclick="eliminarEquipo(${equipo.id})" title="Eliminar">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                            tbody.append(row);
+                        });
+                    });
+                }
+                
+                function renderPagination(data) {
+                    const pagination = $('#pagination');
+                    pagination.empty();
+                    
+                    if (data.totalPages <= 1) return;
+                    
+                    // Botón Anterior
+                    pagination.append(`
+                        <li class="page-item ${data.first ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number - 1})">Anterior</a>
+                        </li>
+                    `);
+                    
+                    // Páginas numeradas
+                    const startPage = Math.max(0, data.number - 2);
+                    const endPage = Math.min(data.totalPages - 1, data.number + 2);
+                    
+                    for (let i = startPage; i <= endPage; i++) {
+                        pagination.append(`
+                            <li class="page-item ${i === data.number ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i})">${i + 1}</a>
+                            </li>
+                        `);
+                    }
+                    
+                    // Botón Siguiente
+                    pagination.append(`
+                        <li class="page-item ${data.last ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number + 1})">Siguiente</a>
+                        </li>
+                    `);
+                }
+                
+                function updateTableInfo(data) {
+                    const info = $('#tableInfo');
+                    const currentPage = data.number + 1;
+                    info.text(`Mostrando ${data.totalElements} de ${data.totalElements} registros (página ${currentPage})`);
+                }
+                
+                // Función global para cambiar página
+                window.changePage = function(page) {
+                    currentPage = page;
+                    loadEquipos();
+                };
+                
+                // Función global para recargar equipos
+                window.loadEquipos = loadEquipos;
+                
+                // Setup modals - copied EXACTLY from área
+                function setupModals() {
+                    // Formulario asignación - CRITICAL: exactly like área responsable form
+                    $('#formAsignacion').on('submit', function(e) {
+                        e.preventDefault();
+                        
+                        // Prevenir doble envío
+                        const $submitBtn = $(this).find('button[type="submit"]');
+                        if ($submitBtn.prop('disabled')) {
+                            return false;
+                        }
+                        
+                        const equipoId = $('#equipoAsignacionId').val();
+                        const usuarioId = $('#usuarioAsignacion').val();
+                        const motivo = $('#motivoAsignacion').val();
+                        
+                        if (!usuarioId) {
+                            alert('Debe seleccionar un usuario');
+                            return;
+                        }
+                        
+                        // Determinar si es reasignación o asignación inicial
+                        const esReasignacion = $('#reasignacionGroup').is(':visible');
+                        let url, data;
+                        
+                        if (esReasignacion) {
+                            // REASIGNACIÓN: Usar endpoint con motivo específico
+                            const motivoReasignacion = $('#motivoReasignacion').val();
+                            
+                            if (!motivoReasignacion) {
+                                alert('Debe seleccionar el motivo de reasignación');
+                                return;
+                            }
+                            
+                            url = `/api/v1/equipos/${equipoId}/asignar-con-motivo`;
+                            data = {
+                                usuarioId: usuarioId,
+                                motivoCambio: motivoReasignacion
+                            };
+                        } else {
+                            // ASIGNACIÓN INICIAL: Usar endpoint simple
+                            url = `/api/v1/equipos/${equipoId}/asignar`;
+                            data = {usuarioId: usuarioId};
+                        }
+                        
+                        // Agregar observaciones si existen
+                        if (motivo) {
+                            data.motivo = motivo;
+                        }
+                        
+                        // Deshabilitar botón durante la petición
+                        $submitBtn.prop('disabled', true).text('Asignando...');
+                        
+                        $.post(url, data)
+                            .done(function(response) {
+                                if (response === 'success') {
+                                    $('#modalAsignacion').modal('hide');
+                                    loadEquipos();
+                                    showAlert('success', 'Equipo asignado exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            })
+                            .fail(function(xhr) {
+                                let errorMsg = 'Error al asignar equipo';
+                                if (xhr.responseText) {
+                                    errorMsg = xhr.responseText;
+                                }
+                                showAlert('error', errorMsg);
+                            })
+                            .always(function() {
+                                // Rehabilitar botón después de la petición
+                                $submitBtn.prop('disabled', false).text('Asignar');
+                            });
+                    });
+                }
+
+                function showAlert(type, message) {
+                    let alertClass = 'alert-danger';
+                    let iconClass = 'fa-exclamation-triangle';
+                    
+                    if (type === 'success') {
+                        alertClass = 'alert-success';
+                        iconClass = 'fa-check-circle';
+                    } else if (type === 'warning') {
+                        alertClass = 'alert-warning';
+                        iconClass = 'fa-exclamation-triangle';
+                    }
+                    
+                    const alert = $(`
+                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                            <i class="fas ${iconClass}"></i> ${message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    `);
+                    
+                    $('.content .container-fluid').prepend(alert);
+                    
+                    setTimeout(function() {
+                        alert.alert('close');
+                    }, 5000);
+                }
+                
+                function formatTipoEquipo(tipo) {
+                    const tipos = {
+                        'VEHICULO': 'Vehículo',
+                        'ELECTRONICO': 'Electrónico', 
+                        'MOBILIARIO': 'Mobiliario',
+                        'HERRAMIENTA': 'Herramienta'
+                    };
+                    return tipos[tipo] || tipo;
+                }
+                
+                function getEstadoBadge(estado) {
+                    switch(estado) {
+                        case 'ACTIVO': return 'badge-success';
+                        case 'INACTIVO': return 'badge-danger';
+                        case 'MANTENIMIENTO': return 'badge-warning';
+                        case 'SUSPENDIDO': return 'badge-dark';
+                        default: return 'badge-secondary';
+                    }
+                }
+            }
+
+            function abrirModalAsignacion(equipoId, equipoNombre) {
+                $('#modalAsignacionTitulo').text('Asignar Equipo: ' + equipoNombre);
+                $('#equipoAsignacionId').val(equipoId);
+                $('#equipoAsignacionNombreDisplay').val(equipoNombre);
+                $('#usuarioAsignacion').val('');
+                $('#motivoAsignacion').val('');
+                $('#motivoReasignacion').val('');
+                
+                // Ocultar ambos campos inicialmente
+                $('#asignacionInicialGroup').hide();
+                $('#reasignacionGroup').hide();
+                $('#motivoReasignacion').removeAttr('required');
+                
+                // Verificar si tiene historial para mostrar campo apropiado
+                $.get(`/api/v1/equipos/${equipoId}/tiene-historial`)
+                    .done(function(tieneHistorial) {
+                        if (tieneHistorial) {
+                            // Es reasignación - mostrar dropdown
+                            $('#reasignacionGroup').show();
+                            $('#motivoReasignacion').attr('required', true);
+                        } else {
+                            // Es asignación inicial - mostrar campo readonly
+                            $('#asignacionInicialGroup').show();
+                        }
+                        
+                        // Mostrar modal después de configurar campos
+                        $('#modalAsignacion').modal('show');
+                    })
+                    .fail(function() {
+                        // Si falla la consulta, asumir asignación inicial
+                        $('#asignacionInicialGroup').show();
+                        $('#modalAsignacion').modal('show');
+                    });
+            }
+            
+            function abrirModalLiberacion(equipoId, equipoNombre) {
+                $('#modalLiberacionTitulo').text('Liberar Equipo: ' + equipoNombre);
+                $('#equipoLiberacionId').val(equipoId);
+                $('#equipoLiberacionNombre').val(equipoNombre);
+                $('#modalLiberacion').modal('show');
+            }
+            
+            
+            function procesarLiberacion() {
+                const equipoId = $('#equipoLiberacionId').val();
+                const motivoCambio = $('#motivoLiberacion').val();
+                const motivo = $('#motivoLiberacionDetalle').val();
+                
+                if (!motivoCambio) {
+                    alert('Debe seleccionar un motivo');
+                    return;
+                }
+                
+                $.post(`/api/v1/equipos/${equipoId}/liberar`, {
+                    motivoCambio: motivoCambio,
+                    motivo: motivo
+                })
+                .done(function() {
+                    $('#modalLiberacion').modal('hide');
+                    window.location.reload();
+                    showAlert('success', 'Devolución marcada como PENDIENTE - requiere confirmación administrativa');
+                })
+                .fail(function(xhr) {
+                    let errorMsg = 'Error al liberar equipo';
+                    if (xhr.responseText) {
+                        errorMsg += ': ' + xhr.responseText;
+                    }
+                    alert(errorMsg);
+                });
+            }
+
+            function eliminarEquipo(id) {
+                if (confirm('¿Está seguro de eliminar este equipo?')) {
+                    $.ajax({
+                        url: '/api/v1/equipos/' + id,
+                        method: 'DELETE',
+                        success: function() {
+                            initEquipos();
+                            alert('Equipo eliminado exitosamente');
+                        },
+                        error: function() {
+                            alert('Error al eliminar el equipo');
+                        }
+                    });
+                }
+            }
+
+            // Función para mostrar historial - copiada exactamente de usuarios
+            window.viewHistory = function(equipoId, nombreEquipo) {
+                $('#historyModalLabel').html(`<i class="fas fa-history"></i> Historial de Asignaciones - ${nombreEquipo}`);
+                $('#historyContent').html(`
+                    <div class="text-center">
+                        <i class="fas fa-spinner fa-spin fa-2x"></i>
+                        <p>Cargando historial...</p>
+                    </div>
+                `);
+                
+                $('#historyModal').modal('show');
+                
+                $.ajax({
+                    url: `/api/v1/equipos/${equipoId}/historial`,
+                    method: 'GET',
+                    xhrFields: {
+                        withCredentials: true
+                    },
+                    success: function(data) {
+                        renderHistoryTable(data);
+                    },
+                    error: function(xhr, status, error) {
+                        $('#historyContent').html(`
+                            <div class="alert alert-danger">
+                                <i class="fas fa-exclamation-triangle"></i>
+                                Error cargando historial: ${xhr.responseText || error}
+                            </div>
+                        `);
+                    }
+                });
+            };
+
+            function renderHistoryTable(historial) {
+                if (!historial || historial.length === 0) {
+                    $('#historyContent').html(`
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            No hay historial de asignaciones registrado para este equipo.
+                        </div>
+                    `);
+                    return;
+                }
+                
+                let tableHTML = `
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>Fecha Asignación</th>
+                                    <th>Motivo Cambio</th>
+                                    <th>Usuario Anterior</th>
+                                    <th>Usuario Nuevo</th>
+                                    <th>Estado Devolución</th>
+                                    <th>Fecha Devolución</th>
+                                    <th>Observaciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+                
+                historial.forEach(item => {
+                    tableHTML += `
+                        <tr>
+                            <td>${formatDateTime(item.fechaAsignacion)}</td>
+                            <td><span class="badge ${getMotivoBadge(item.motivoCambio)}">${formatMotivoCambio(item.motivoCambio)}</span></td>
+                            <td>${item.usuarioAnteriorNombre || '-'}</td>
+                            <td>${item.usuarioNuevoNombre || '<span class="text-warning">Liberado</span>'}</td>
+                            <td><span class="badge ${getEstadoDevolucionBadge(item.estadoDevolucion)}">${formatEstadoDevolucion(item.estadoDevolucion)}</span></td>
+                            <td>${formatDateTime(item.fechaDevolucion) || '-'}</td>
+                            <td>${item.observaciones || '-'}</td>
+                        </tr>
+                    `;
+                });
+                
+                tableHTML += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+                
+                $('#historyContent').html(tableHTML);
+            }
+            
+            function formatDateTime(dateString) {
+                if (!dateString) return '-';
+                const date = new Date(dateString);
+                return date.toLocaleString('es-ES');
+            }
+            
+            function getMotivoBadge(motivoCambio) {
+                switch(motivoCambio) {
+                    case 'ASIGNACION_INICIAL': return 'badge-primary';
+                    case 'DEVOLUCION_VOLUNTARIA': return 'badge-warning';
+                    case 'CAMBIO_AREA': return 'badge-info';
+                    case 'CAMBIO_PUESTO': return 'badge-secondary';
+                    case 'REASIGNACION_ADMINISTRATIVA': return 'badge-success';
+                    default: return 'badge-light';
+                }
+            }
+            
+            function formatMotivoCambio(motivoCambio) {
+                switch(motivoCambio) {
+                    case 'ASIGNACION_INICIAL': return 'Asignación Inicial';
+                    case 'DEVOLUCION_VOLUNTARIA': return 'Devolución Voluntaria';
+                    case 'CAMBIO_AREA': return 'Cambio de Área';
+                    case 'CAMBIO_PUESTO': return 'Cambio de Puesto';
+                    case 'REASIGNACION_ADMINISTRATIVA': return 'Reasignación Administrativa';
+                    default: return motivoCambio;
+                }
+            }
+
+            function getEstadoDevolucionBadge(estado) {
+                switch(estado) {
+                    case 'PENDIENTE': return 'badge-warning';
+                    case 'CONFIRMADA': return 'badge-success';
+                    default: return 'badge-light';
+                }
+            }
+
+            function formatEstadoDevolucion(estado) {
+                switch(estado) {
+                    case 'PENDIENTE': return 'Pendiente';
+                    case 'CONFIRMADA': return 'Confirmada';
+                    default: return estado || 'N/A';
+                }
+            }
+            
+            function checkPendingReturn(equipoId) {
+                return $.get(`/api/v1/equipos/${equipoId}/devolucion-pendiente`)
+                    .then(data => {
+                        if (!data || data === "" || typeof data === "string" || !data.id) {
+                            return null;
+                        }
+                        return data;
+                    })
+                    .catch(error => {
+                        return null;
+                    });
+            }
+            
+            function checkOpenReports(equipoId) {
+                return $.get(`/api/v1/equipos/${equipoId}/reportes-abiertos`)
+                    .then(data => data === true)
+                    .catch(error => false);
+            }
+            
+            function confirmarDevolucion(equipoId, historialId) {
+                if (confirm('¿Confirmar la devolución del equipo? Esto liberará completamente el equipo.')) {
+                    $.post(`/api/v1/equipos/${equipoId}/historial/${historialId}/confirmar`)
+                        .done(function() {
+                            loadEquipos();
+                            showAlert('success', 'Devolución confirmada exitosamente');
+                        })
+                        .fail(function(xhr) {
+                            let errorMsg = 'Error al confirmar devolución';
+                            if (xhr.responseText) {
+                                errorMsg += ': ' + xhr.responseText;
+                            }
+                            showAlert('error', errorMsg);
+                        });
+                }
+            }
+            
+            
+            // Iniciar cuando el DOM esté listo
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', waitForJQuery);
+            } else {
+                waitForJQuery();
+            }
+        </script>
+    </div>
+    
+    <!-- Modales -->
+    <div layout:fragment="modals">
+        <!-- Modal Asignación -->
+        <div class="modal fade" id="modalAsignacion" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalAsignacionTitulo">Asignar Equipo</h4>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label>Equipo:</label>
+                            <input type="text" class="form-control" id="equipoAsignacionNombreDisplay" readonly>
+                        </div>
+                        <div class="form-group">
+                            <label for="usuarioAsignacion">Usuario *</label>
+                            <select class="form-control" id="usuarioAsignacion" required>
+                                <option value="">Seleccionar usuario</option>
+                                <option th:each="usuario : ${usuariosActivos}" 
+                                        th:value="${usuario.id}" 
+                                        th:text="${usuario.primerNombre + ' ' + usuario.primerApellido}"></option>
+                            </select>
+                        </div>
+                        
+                        <!-- Campo dinámico para asignación inicial -->
+                        <div class="form-group" id="asignacionInicialGroup" style="display: none;">
+                            <label>Tipo de Asignación:</label>
+                            <input type="text" class="form-control" value="✨ Asignación Inicial" readonly 
+                                   style="background-color: #e8f5e8; border-color: #d1ecf1;">
+                            <small class="form-text text-muted">Este equipo se asigna por primera vez</small>
+                        </div>
+                        
+                        <!-- Campo dinámico para reasignación -->
+                        <div class="form-group" id="reasignacionGroup" style="display: none;">
+                            <label for="motivoReasignacion">Motivo de Reasignación *</label>
+                            <select class="form-control" id="motivoReasignacion" required>
+                                <option value="">Seleccionar motivo</option>
+                                <option value="REASIGNACION_ADMINISTRATIVA">⚙️ Reasignación Administrativa</option>
+                                <option value="CAMBIO_AREA">🏢 Cambio de Área</option>
+                                <option value="CAMBIO_PUESTO">👔 Cambio de Puesto</option>
+                            </select>
+                            <small class="form-text text-muted">Selecciona la razón de la reasignación</small>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="motivoAsignacion">Observaciones</label>
+                            <textarea class="form-control" id="motivoAsignacion" rows="3" placeholder="Observaciones adicionales (opcional)"></textarea>
+                        </div>
+                    </div>
+                    <form id="formAsignacion">
+                        <input type="hidden" id="equipoAsignacionId">
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Asignar</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Liberación -->
+        <div class="modal fade" id="modalLiberacion" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="modalLiberacionTitulo">Liberar Equipo</h4>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <form id="formLiberacion">
+                            <input type="hidden" id="equipoLiberacionId">
+                            <input type="hidden" id="equipoLiberacionNombre">
+                            <div class="form-group">
+                                <label for="motivoLiberacion">Motivo de Liberación *</label>
+                                <select class="form-control" id="motivoLiberacion" required>
+                                    <option value="">Seleccionar motivo</option>
+                                    <option value="DEVOLUCION_VOLUNTARIA">Devolución Voluntaria</option>
+                                    <option value="CAMBIO_AREA">Cambio de Área</option>
+                                    <option value="CAMBIO_PUESTO">Cambio de Puesto</option>
+                                    <option value="REASIGNACION_ADMINISTRATIVA">Reasignación Administrativa</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="motivoLiberacionDetalle">Detalle</label>
+                                <textarea class="form-control" id="motivoLiberacionDetalle" rows="3" placeholder="Detalle del motivo de liberación (opcional)"></textarea>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-warning" onclick="procesarLiberacion()">Liberar</button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Modal Historial -->
+        <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="historyModalLabel">
+                            <i class="fas fa-history"></i> Historial de Asignaciones
+                        </h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="historyContent">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p>Cargando historial...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

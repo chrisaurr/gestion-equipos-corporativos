@@ -1,12 +1,13 @@
 package com.gestion.equipos.entity;
 
+import com.gestion.equipos.config.PostgreSQLEnumJdbcType;
 import com.gestion.equipos.entity.enums.EstadoReporte;
-import com.gestion.equipos.entity.enums.PrioridadReporte;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcType;
 
 import java.time.LocalDateTime;
 
@@ -35,18 +36,17 @@ public class Reporte {
     private Equipo idEquipo;
     
     @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private PrioridadReporte prioridad;
-    
-    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "id_empleado", nullable = false)
-    private Empleado idEmpleado;
+    @JoinColumn(name = "id_usuario", nullable = false)
+    private Usuario idUsuario;
     
     @Enumerated(EnumType.STRING)
-    @Column(columnDefinition = "varchar(20) default 'ABIERTO'")
+    @JdbcType(PostgreSQLEnumJdbcType.class)
+    @Column(name = "estado", columnDefinition = "estado_reporte")
     private EstadoReporte estado = EstadoReporte.ABIERTO;
+    
+    @Column(columnDefinition = "boolean default true")
+    private Boolean activo = true;
     
     @Column(name = "fecha_commit", columnDefinition = "timestamp default now()")
     private LocalDateTime fechaCommit = LocalDateTime.now();

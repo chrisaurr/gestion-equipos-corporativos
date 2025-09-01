@@ -29,6 +29,8 @@ public interface UsuarioService {
     
     List<UsuarioEmpleadoDTO> findAllUsuarioEmpleado();
     
+    List<Usuario> findAllActive();
+    
     Optional<Usuario> findById(Integer id);
     
     Optional<UsuarioEmpleadoDTO> findUsuarioEmpleadoById(Integer usuarioId);

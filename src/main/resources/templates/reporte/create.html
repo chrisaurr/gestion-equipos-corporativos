@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Crear Reporte</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header (Page header) -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Crear Reporte</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item"><a href="/reportes">Reportes</a></li>
+                            <li class="breadcrumb-item active">Crear</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Error Message -->
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Información del Reporte</h3>
+                        <div class="card-tools">
+                            <a href="/reportes" class="btn btn-secondary btn-sm">
+                                <i class="fas fa-arrow-left"></i> Volver
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <form th:action="@{/reportes/crear}" th:object="${reporteCreateDTO}" method="post">
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Observación -->
+                                <div class="col-md-12 mb-3">
+                                    <label for="observacion" class="form-label">Observación *</label>
+                                    <textarea class="form-control" 
+                                              th:field="*{observacion}" 
+                                              id="observacion" 
+                                              rows="4" 
+                                              placeholder="Describa detalladamente el problema o incidencia..."
+                                              th:classappend="${#fields.hasErrors('observacion')} ? 'is-invalid' : ''"></textarea>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('observacion')}" th:errors="*{observacion}"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <!-- Causa -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="causaId" class="form-label">Causa *</label>
+                                    <select class="form-control" 
+                                            th:field="*{causaId}" 
+                                            id="causaId"
+                                            th:classappend="${#fields.hasErrors('causaId')} ? 'is-invalid' : ''">
+                                        <option value="">Seleccione una causa</option>
+                                        <option th:each="causa : ${causas}" 
+                                                th:value="${causa.id}" 
+                                                th:text="${causa.nombre + ' - ' + causa.prioridadReporte}"
+                                                th:data-prioridad="${causa.prioridadReporte}">
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('causaId')}" th:errors="*{causaId}"></div>
+                                    <small class="form-text text-muted">La prioridad se asigna automáticamente según la causa seleccionada</small>
+                                </div>
+                                
+                                <!-- Equipo -->
+                                <div class="col-md-6 mb-3">
+                                    <label for="equipoId" class="form-label">Equipo *</label>
+                                    <select class="form-control" 
+                                            th:field="*{equipoId}" 
+                                            id="equipoId"
+                                            th:classappend="${#fields.hasErrors('equipoId')} ? 'is-invalid' : ''">
+                                        <option value="">Seleccione un equipo</option>
+                                        <option th:each="equipo : ${equipos}" 
+                                                th:value="${equipo.id}" 
+                                                th:text="${equipo.identificador + ' - ' + equipo.nombre}">
+                                        </option>
+                                    </select>
+                                    <div class="invalid-feedback" th:if="${#fields.hasErrors('equipoId')}" th:errors="*{equipoId}"></div>
+                                    <small class="form-text text-muted">Solo se muestran equipos disponibles (sin reportes activos)</small>
+                                </div>
+                            </div>
+                            
+                        </div>
+                        
+                        <div class="card-footer">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save"></i> Crear Reporte
+                                    </button>
+                                    <a href="/reportes" class="btn btn-secondary ml-2">
+                                        <i class="fas fa-times"></i> Cancelar
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                // Mejorar la visualización de la causa con prioridad
+                $('#causaId').on('change', function() {
+                    const selectedOption = $(this).find('option:selected');
+                    const prioridad = selectedOption.data('prioridad');
+                    
+                    if (prioridad) {
+                        let prioridadBadge = '';
+                        switch(prioridad) {
+                            case 'BAJA':
+                                prioridadBadge = '<span class="badge badge-success ml-2">🟢 Baja</span>';
+                                break;
+                            case 'MEDIA':
+                                prioridadBadge = '<span class="badge badge-warning ml-2">🟡 Media</span>';
+                                break;
+                            case 'ALTA':
+                                prioridadBadge = '<span class="badge badge-info ml-2">🟠 Alta</span>';
+                                break;
+                            case 'CRITICA':
+                                prioridadBadge = '<span class="badge badge-danger ml-2">🔴 Crítica</span>';
+                                break;
+                        }
+                        
+                        // Mostrar indicador de prioridad
+                        $('#prioridadIndicator').remove();
+                        if (prioridadBadge) {
+                            $(this).after(`<div id="prioridadIndicator" class="mt-1">Prioridad: ${prioridadBadge}</div>`);
+                        }
+                    }
+                });
+                
+                // Validación del formulario
+                $('form').on('submit', function(e) {
+                    let isValid = true;
+                    
+                    // Validar observación
+                    const observacion = $('#observacion').val().trim();
+                    if (!observacion) {
+                        showFieldError('#observacion', 'La observación es obligatoria');
+                        isValid = false;
+                    }
+                    
+                    // Validar causa
+                    const causaId = $('#causaId').val();
+                    if (!causaId) {
+                        showFieldError('#causaId', 'Debe seleccionar una causa');
+                        isValid = false;
+                    }
+                    
+                    // Validar equipo
+                    const equipoId = $('#equipoId').val();
+                    if (!equipoId) {
+                        showFieldError('#equipoId', 'Debe seleccionar un equipo');
+                        isValid = false;
+                    }
+                    
+                    if (!isValid) {
+                        e.preventDefault();
+                        return false;
+                    }
+                });
+                
+                function showFieldError(fieldSelector, message) {
+                    const field = $(fieldSelector);
+                    field.addClass('is-invalid');
+                    field.siblings('.invalid-feedback').remove();
+                    field.after(`<div class="invalid-feedback">${message}</div>`);
+                }
+                
+                // Limpiar errores al cambiar valores
+                $('.form-control').on('input change', function() {
+                    $(this).removeClass('is-invalid');
+                    $(this).siblings('.invalid-feedback').remove();
+                });
+            });
+        </script>
+    </div>
+</body>
+</html>

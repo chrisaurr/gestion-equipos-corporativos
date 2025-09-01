@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:th="http://www.thymeleaf.org"
+      layout:decorate="~{shared/layout}">
+
+<head>
+    <title>Gestión de Causas</title>
+</head>
+
+<body>
+    <div layout:fragment="content">
+        <!-- Content Header -->
+        <div class="content-header">
+            <div class="container-fluid">
+                <div class="row mb-2">
+                    <div class="col-sm-6">
+                        <h1 class="m-0">Gestión de Causas</h1>
+                    </div>
+                    <div class="col-sm-6">
+                        <ol class="breadcrumb float-sm-right">
+                            <li class="breadcrumb-item"><a href="/dashboard">Dashboard</a></li>
+                            <li class="breadcrumb-item active">Causas</li>
+                        </ol>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main content -->
+        <section class="content">
+            <div class="container-fluid">
+                
+                <!-- Flash Messages -->
+                <div th:if="${successMessage}" class="alert alert-success alert-dismissible fade show" role="alert">
+                    <span th:text="${successMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div th:if="${errorMessage}" class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <span th:text="${errorMessage}"></span>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header">
+                        <h3 class="card-title">Lista de Causas</h3>
+                        <div class="card-tools">
+                            <button type="button" class="btn btn-primary btn-sm" 
+                                    data-toggle="modal" data-target="#createModal">
+                                <i class="fas fa-plus"></i> Nueva Causa
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body">
+                        <!-- Tabla con filtros inline -->
+                        <div class="table-responsive">
+                            <table id="causasTable" class="table table-bordered table-striped table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Descripción</th>
+                                        <th>Prioridad</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                    <!-- Fila de filtros -->
+                                    <tr class="filter-row">
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterNombre" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                                   id="filterDescripcion" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterPrioridad">
+                                                <option value="">Todas</option>
+                                                <option value="BAJA">Baja</option>
+                                                <option value="MEDIA">Media</option>
+                                                <option value="ALTA">Alta</option>
+                                                <option value="CRITICA">Crítica</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterActivo">
+                                                <option value="">Todos</option>
+                                                <option value="true">Activo</option>
+                                                <option value="false">Inactivo</option>
+                                            </select>
+                                        </th>
+                                        <th>
+                                            <button type="button" class="btn btn-secondary btn-sm btn-block" id="clearFilters">
+                                                <i class="fas fa-times"></i>
+                                            </button>
+                                        </th>
+                                    </tr>
+                                </thead>
+                                <tbody id="causasTableBody">
+                                    <!-- Contenido se llena dinámicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Información y paginación -->
+                        <div class="row mt-3">
+                            <div class="col-sm-5">
+                                <div class="dataTables_info" id="tableInfo"></div>
+                            </div>
+                            <div class="col-sm-7">
+                                <div class="dataTables_paginate paging_simple_numbers" id="tablePagination"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div layout:fragment="modals">
+        <!-- Modal Crear -->
+        <div class="modal fade" id="createModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Crear Nueva Causa</h4>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <form id="createForm">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="createNombre">Nombre *</label>
+                                <input type="text" class="form-control" id="createNombre" name="nombre" 
+                                       maxlength="50" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="createDescripcion">Descripción</label>
+                                <textarea class="form-control" id="createDescripcion" name="descripcion" 
+                                         rows="3" maxlength="300"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="createPrioridad">Prioridad *</label>
+                                <select class="form-control" id="createPrioridad" name="prioridadReporte" required>
+                                    <option value="">Seleccionar prioridad</option>
+                                    <option value="BAJA">🟢 Baja</option>
+                                    <option value="MEDIA">🟡 Media</option>
+                                    <option value="ALTA">🟠 Alta</option>
+                                    <option value="CRITICA">🔴 Crítica</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Crear</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Editar -->
+        <div class="modal fade" id="editModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Editar Causa</h4>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <form id="editForm">
+                        <input type="hidden" id="editId" name="id">
+                        <div class="modal-body">
+                            <div class="form-group">
+                                <label for="editNombre">Nombre *</label>
+                                <input type="text" class="form-control" id="editNombre" name="nombre" 
+                                       maxlength="50" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="editDescripcion">Descripción</label>
+                                <textarea class="form-control" id="editDescripcion" name="descripcion" 
+                                         rows="3" maxlength="300"></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label for="editPrioridad">Prioridad *</label>
+                                <select class="form-control" id="editPrioridad" name="prioridadReporte" required>
+                                    <option value="">Seleccionar prioridad</option>
+                                    <option value="BAJA">🟢 Baja</option>
+                                    <option value="MEDIA">🟡 Media</option>
+                                    <option value="ALTA">🟠 Alta</option>
+                                    <option value="CRITICA">🔴 Crítica</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="submit" class="btn btn-primary">Actualizar</button>
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal Ver -->
+        <div class="modal fade" id="viewModal" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">Detalles de la Causa</h4>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th style="width: 30%">ID:</th>
+                                <td id="viewId"></td>
+                            </tr>
+                            <tr>
+                                <th>Nombre:</th>
+                                <td id="viewNombre"></td>
+                            </tr>
+                            <tr>
+                                <th>Descripción:</th>
+                                <td id="viewDescripcion"></td>
+                            </tr>
+                            <tr>
+                                <th>Prioridad:</th>
+                                <td id="viewPrioridad"></td>
+                            </tr>
+                            <tr>
+                                <th>Estado:</th>
+                                <td id="viewEstado"></td>
+                            </tr>
+                            <tr>
+                                <th>Creado por:</th>
+                                <td id="viewCreadoPor"></td>
+                            </tr>
+                            <tr>
+                                <th>Fecha:</th>
+                                <td id="viewFecha"></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div layout:fragment="script">
+        <script>
+            $(document).ready(function() {
+                let currentPage = 0;
+                let pageSize = 10;
+                let currentFilters = {};
+                
+                // Cargar datos iniciales
+                loadCausas();
+                
+                // Configurar filtros con debounce
+                $('.filter-input').on('input change', debounce(function() {
+                    currentPage = 0;
+                    updateFilters();
+                    loadCausas();
+                }, 500));
+                
+                // Limpiar filtros
+                $('#clearFilters').click(function() {
+                    $('.filter-input').val('');
+                    currentPage = 0;
+                    currentFilters = {};
+                    loadCausas();
+                });
+                
+                // Formularios de modales
+                setupModals();
+                
+                function debounce(func, wait) {
+                    let timeout;
+                    return function executedFunction(...args) {
+                        const later = function() {
+                            clearTimeout(timeout);
+                            func(...args);
+                        };
+                        clearTimeout(timeout);
+                        timeout = setTimeout(later, wait);
+                    };
+                }
+                
+                function updateFilters() {
+                    currentFilters = {
+                        nombre: $('#filterNombre').val(),
+                        descripcion: $('#filterDescripcion').val(),
+                        activo: $('#filterActivo').val() !== '' ? $('#filterActivo').val() : null,
+                        page: currentPage,
+                        size: pageSize,
+                        sort: 'nombre',
+                        direction: 'asc'
+                    };
+                }
+                
+                function loadCausas() {
+                    updateFilters();
+                    
+                    // Limpiar parámetros vacíos
+                    const params = new URLSearchParams();
+                    Object.keys(currentFilters).forEach(key => {
+                        if (currentFilters[key] !== '' && currentFilters[key] !== null && currentFilters[key] !== undefined) {
+                            params.append(key, currentFilters[key]);
+                        }
+                    });
+                    
+                    $.ajax({
+                        url: '/api/v1/causas?' + params.toString(),
+                        method: 'GET',
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function(data) {
+                            updateTable(data);
+                            updatePagination(data);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error al cargar causas:', error);
+                            showAlert('error', 'Error al cargar las causas');
+                        }
+                    });
+                }
+                
+                function updateTable(data) {
+                    const tbody = $('#causasTableBody');
+                    tbody.empty();
+                    
+                    if (!data.content || data.content.length === 0) {
+                        tbody.append(`
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No se encontraron registros</td>
+                            </tr>
+                        `);
+                        updateInfo(0, 0, 0);
+                        return;
+                    }
+                    
+                    data.content.forEach(causa => {
+                        tbody.append(`
+                            <tr>
+                                <td>${causa.nombre}</td>
+                                <td>${causa.descripcion || ''}</td>
+                                <td>${formatPrioridad(causa.prioridadReporte)}</td>
+                                <td>${causa.activo ? '<span class="badge badge-success">Activo</span>' : '<span class="badge badge-danger">Inactivo</span>'}</td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <button class="btn btn-info btn-sm" onclick="viewCausa(${causa.id})" title="Ver detalles">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-warning btn-sm" onclick="editCausa(${causa.id})" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-danger btn-sm" onclick="deleteCausa(${causa.id})" title="Eliminar">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        `);
+                    });
+                    
+                    updateInfo(data.content.length, data.totalElements, data.number + 1);
+                }
+                
+                function formatPrioridad(prioridad) {
+                    const badges = {
+                        'BAJA': '<span class="badge badge-success">🟢 Baja</span>',
+                        'MEDIA': '<span class="badge badge-warning">🟡 Media</span>',
+                        'ALTA': '<span class="badge badge-info">🟠 Alta</span>',
+                        'CRITICA': '<span class="badge badge-danger">🔴 Crítica</span>'
+                    };
+                    return badges[prioridad] || prioridad;
+                }
+                
+                function updatePagination(data) {
+                    const pagination = $('#tablePagination');
+                    pagination.empty();
+                    
+                    if (data.totalPages <= 1) return;
+                    
+                    const ul = $('<ul class="pagination pagination-sm justify-content-end mb-0"></ul>');
+                    
+                    // Anterior
+                    ul.append(`
+                        <li class="page-item ${data.first ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number - 1}); return false;">Anterior</a>
+                        </li>
+                    `);
+                    
+                    // Páginas
+                    const start = Math.max(0, data.number - 2);
+                    const end = Math.min(data.totalPages - 1, data.number + 2);
+                    
+                    for (let i = start; i <= end; i++) {
+                        ul.append(`
+                            <li class="page-item ${i === data.number ? 'active' : ''}">
+                                <a class="page-link" href="#" onclick="changePage(${i}); return false;">${i + 1}</a>
+                            </li>
+                        `);
+                    }
+                    
+                    // Siguiente
+                    ul.append(`
+                        <li class="page-item ${data.last ? 'disabled' : ''}">
+                            <a class="page-link" href="#" onclick="changePage(${data.number + 1}); return false;">Siguiente</a>
+                        </li>
+                    `);
+                    
+                    pagination.append(ul);
+                }
+                
+                function updateInfo(showing, total, page) {
+                    $('#tableInfo').text(`Mostrando ${showing} de ${total} registros (página ${page})`);
+                }
+                
+                window.changePage = function(page) {
+                    currentPage = page;
+                    loadCausas();
+                };
+                
+                window.viewCausa = function(id) {
+                    $.get(`/api/v1/causas/${id}`)
+                        .done(function(causa) {
+                            $('#viewId').text(causa.id);
+                            $('#viewNombre').text(causa.nombre);
+                            $('#viewDescripcion').text(causa.descripcion || '');
+                            $('#viewPrioridad').html(formatPrioridad(causa.prioridadReporte));
+                            $('#viewEstado').html(causa.activo ? 
+                                '<span class="badge badge-success">Activo</span>' : 
+                                '<span class="badge badge-danger">Inactivo</span>');
+                            $('#viewCreadoPor').text(causa.creadoPor || '');
+                            $('#viewFecha').text(causa.fechaCommit ? 
+                                new Date(causa.fechaCommit).toLocaleString() : '');
+                            
+                            $('#viewModal').modal('show');
+                        });
+                };
+                
+                window.editCausa = function(id) {
+                    $.get(`/api/v1/causas/${id}`)
+                        .done(function(causa) {
+                            $('#editId').val(causa.id);
+                            $('#editNombre').val(causa.nombre);
+                            $('#editDescripcion').val(causa.descripcion || '');
+                            $('#editPrioridad').val(causa.prioridadReporte);
+                            
+                            $('#editModal').modal('show');
+                        });
+                };
+                
+                window.deleteCausa = function(id) {
+                    if (confirm('¿Está seguro de que desea eliminar esta causa?')) {
+                        $.ajax({
+                            url: `/causas/${id}`,
+                            type: 'DELETE',
+                            success: function(response) {
+                                if (response === 'success') {
+                                    loadCausas();
+                                    showAlert('success', 'Causa eliminada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            },
+                            error: function() {
+                                showAlert('error', 'Error al eliminar la causa');
+                            }
+                        });
+                    }
+                };
+                
+                function setupModals() {
+                    // Formulario crear
+                    $('#createForm').on('submit', function(e) {
+                        e.preventDefault();
+                        
+                        $.post('/causas', $(this).serialize())
+                            .done(function(response) {
+                                if (response === 'success') {
+                                    $('#createModal').modal('hide');
+                                    $('#createForm')[0].reset();
+                                    loadCausas();
+                                    showAlert('success', 'Causa creada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            })
+                            .fail(function() {
+                                showAlert('error', 'Error al crear la causa');
+                            });
+                    });
+                    
+                    // Formulario editar
+                    $('#editForm').on('submit', function(e) {
+                        e.preventDefault();
+                        const id = $('#editId').val();
+                        
+                        $.ajax({
+                            url: '/causas/' + id,
+                            type: 'PUT',
+                            data: $(this).serialize(),
+                            success: function(response) {
+                                if (response === 'success') {
+                                    $('#editModal').modal('hide');
+                                    loadCausas();
+                                    showAlert('success', 'Causa actualizada exitosamente');
+                                } else {
+                                    showAlert('error', response);
+                                }
+                            },
+                            error: function() {
+                                showAlert('error', 'Error al actualizar la causa');
+                            }
+                        });
+                    });
+                }
+                
+                function showAlert(type, message) {
+                    const alertClass = type === 'success' ? 'alert-success' : 'alert-danger';
+                    const iconClass = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-triangle';
+                    
+                    const alert = $(`
+                        <div class="alert ${alertClass} alert-dismissible fade show" role="alert">
+                            <i class="fas ${iconClass}"></i> ${message}
+                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                    `);
+                    
+                    $('.content .container-fluid').prepend(alert);
+                    
+                    setTimeout(function() {
+                        alert.alert('close');
+                    }, 5000);
+                }
+            });
+        </script>
+    </div>
+</body>
+</html>

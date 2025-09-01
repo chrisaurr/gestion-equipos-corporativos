@@ -85,6 +85,12 @@ public class UsuarioServiceImpl implements UsuarioService {
     public List<Usuario> findAll() {
         return usuarioRepository.findAll();
     }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public List<Usuario> findAllActive() {
+        return usuarioRepository.findByEstado(EstadoUsuario.ACTIVO);
+    }
 
     @Override
     @Transactional(readOnly = true)
