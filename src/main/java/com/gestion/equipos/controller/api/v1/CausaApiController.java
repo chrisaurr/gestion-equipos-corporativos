@@ -27,16 +27,17 @@ public class CausaApiController {
     public ResponseEntity<Page<CausaDTO>> getCausas(
             @RequestParam(required = false) String nombre,
             @RequestParam(required = false) String descripcion,
+            @RequestParam(required = false) String prioridadReporte,
             @RequestParam(required = false) Boolean activo,
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size,
             @RequestParam(defaultValue = "nombre") String sort,
             @RequestParam(defaultValue = "asc") String direction) {
-        
+
         Sort sortOrder = Sort.by(Sort.Direction.fromString(direction), sort);
         Pageable pageable = PageRequest.of(page, size, sortOrder);
-        
-        Page<CausaDTO> causas = causaService.findAll(nombre, descripcion, activo, pageable);
+
+        Page<CausaDTO> causas = causaService.findAll(nombre, descripcion, prioridadReporte, activo, pageable);
         return ResponseEntity.ok(causas);
     }
     

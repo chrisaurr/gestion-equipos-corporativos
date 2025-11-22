@@ -29,17 +29,15 @@ public class EquipoCreateDTO {
     @NotNull(message = "La marca es obligatoria")
     private Integer marcaId;
     
-    @NotBlank(message = "El color es obligatorio")
     @Size(max = 50, message = "El color no puede exceder 50 caracteres")
-    private String color;
-    
+    private String color; // Opcional - no todos los equipos requieren especificar color
+
     @NotNull(message = "El valor es obligatorio")
     @DecimalMin(value = "0.0", message = "El valor no puede ser negativo")
     private BigDecimal valor;
-    
-    @NotBlank(message = "La serie es obligatoria")
+
     @Size(max = 50, message = "La serie no puede exceder 50 caracteres")
-    private String serie;
+    private String serie; // Opcional - solo equipos de alto valor tienen número de serie
     
     private String extras; // text - opcional
     

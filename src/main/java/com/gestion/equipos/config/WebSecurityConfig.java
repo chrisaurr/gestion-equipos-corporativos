@@ -47,20 +47,24 @@ public class WebSecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .userDetailsService(customUserDetailsService)
                 .authorizeHttpRequests(authz -> authz
-                    .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico").permitAll()
+                    .requestMatchers("/login", "/register", "/css/**", "/js/**", "/images/**", "/webjars/**", "/favicon.ico", "/api/v1/usuarios/auth-status").permitAll()
                     .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                     .loginPage("/login")
-                    .loginProcessingUrl("/login")
-                    .defaultSuccessUrl("/", true)
+                    .defaultSuccessUrl("/usuarios", true)
                     .failureUrl("/login?error")
                     .permitAll()
                 )
                 .logout(logout -> logout
                     .logoutUrl("/logout")
                     .logoutSuccessUrl("/login?logout")
+                    .invalidateHttpSession(true)
+                    .deleteCookies("JSESSIONID")
                     .permitAll()
+                )
+                .headers(headers -> headers
+                    .cacheControl(cache -> cache.disable())
                 );
         return http.build();
     }

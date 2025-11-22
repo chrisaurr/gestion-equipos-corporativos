@@ -1,0 +1,28 @@
+services:
+  # PostgreSQL Database for Testing
+  postgres-test:
+    image: postgres:15-alpine
+    container_name: inventario-postgres-test
+    environment:
+      POSTGRES_DB: inventario_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C"
+    ports:
+      - "5432:5432"  # Mismo puerto que desarrollo
+    volumes:
+      - ./init-db-test:/docker-entrypoint-initdb.d
+    tmpfs:
+      - /var/lib/postgresql/data:rw  # En RAM - más rápido y se limpia al apagar
+    networks:
+      - test-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d inventario_test"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+networks:
+  test-network:
+    driver: bridge

@@ -10,9 +10,10 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 public class UbicacionFilterDTO {
-    
+
     private String nombre;
     private String descripcion;
+    private Boolean activo;
     private int page = 0;
     private int size = 10;
     private String sort = "nombre";

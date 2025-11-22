@@ -8,9 +8,10 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class MarcaFilterDTO {
-    
+
     private String nombre;
-    
+    private Boolean activo;
+
     private int page = 0;
     private int size = 10;
     private String sort = "nombre";

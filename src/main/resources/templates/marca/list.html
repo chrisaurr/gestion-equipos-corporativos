@@ -59,13 +59,21 @@
                                 <thead>
                                     <tr>
                                         <th>Nombre</th>
+                                        <th>Estado</th>
                                         <th>Acciones</th>
                                     </tr>
                                     <!-- Fila de filtros -->
                                     <tr class="filter-row">
                                         <th>
-                                            <input type="text" class="form-control form-control-sm filter-input" 
+                                            <input type="text" class="form-control form-control-sm filter-input"
                                                    id="filterNombre" placeholder="Filtrar...">
+                                        </th>
+                                        <th>
+                                            <select class="form-control form-control-sm filter-input" id="filterActivo">
+                                                <option value="">Todos</option>
+                                                <option value="true" selected>Activo</option>
+                                                <option value="false">Inactivo</option>
+                                            </select>
                                         </th>
                                         <th>
                                             <button type="button" class="btn btn-secondary btn-sm btn-block" id="clearFilters">
@@ -122,6 +130,7 @@
                 // Limpiar filtros
                 $('#clearFilters').click(function() {
                     $('.filter-input').val('');
+                    $('#filterActivo').val('true'); // Restaurar a mostrar solo activos
                     currentPage = 0;
                     currentFilters = {};
                     loadMarcas();
@@ -145,6 +154,7 @@
                 function updateFilters() {
                     currentFilters = {
                         nombre: $('#filterNombre').val(),
+                        activo: $('#filterActivo').val() !== '' ? $('#filterActivo').val() === 'true' : null,
                         page: currentPage,
                         size: pageSize,
                         sortBy: 'nombre',
@@ -187,17 +197,27 @@
                     if (!data.content || data.content.length === 0) {
                         tbody.append(`
                             <tr>
-                                <td colspan="2" class="text-center text-muted">No se encontraron registros</td>
+                                <td colspan="3" class="text-center text-muted">No se encontraron registros</td>
                             </tr>
                         `);
                         updateInfo(0, 0, 0);
                         return;
                     }
-                    
+
                     data.content.forEach(marca => {
+                        const estado = marca.activo ?
+                            '<span class="badge badge-success">Activo</span>' :
+                            '<span class="badge badge-danger">Inactivo</span>';
+
+                        const deleteButton = marca.activo ?
+                            `<button class="btn btn-danger btn-sm" onclick="deleteMarca(${marca.id})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>` : '';
+
                         tbody.append(`
                             <tr>
                                 <td>${marca.nombre}</td>
+                                <td>${estado}</td>
                                 <td>
                                     <div class="btn-group" role="group">
                                         <button class="btn btn-info btn-sm" onclick="viewMarca(${marca.id})" title="Ver detalles">
@@ -206,9 +226,7 @@
                                         <button class="btn btn-warning btn-sm" onclick="editMarca(${marca.id})" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteMarca(${marca.id})" title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        ${deleteButton}
                                     </div>
                                 </td>
                             </tr>

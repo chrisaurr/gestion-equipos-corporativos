@@ -246,28 +246,32 @@ public class UsuarioServiceImpl implements UsuarioService {
     @Override
     public UsuarioEmpleadoDTO saveUsuarioEmpleado(UsuarioEmpleadoCreateDTO createDTO) {
         validateUsuarioEmpleadoForCreate(createDTO);
-        
+
+        // Sanitizar campos opcionales antes de mapear
+        createDTO.setSegundoNombre(sanitizeString(createDTO.getSegundoNombre()));
+        createDTO.setSegundoApellido(sanitizeString(createDTO.getSegundoApellido()));
+
         Usuario usuario = modelMapper.map(createDTO, Usuario.class);
         usuario.setFechaCommit(LocalDateTime.now());
         Usuario savedUsuario = save(usuario);
-        
+
         if (createDTO.getEsEmpleado()) {
             if (createDTO.getAreaId() == null) {
                 throw new RuntimeException("El área es obligatoria para empleados");
             }
-            
+
             Area area = areaService.findById(createDTO.getAreaId())
                     .orElseThrow(() -> new RuntimeException("Área no encontrada"));
-            
+
             Empleado empleado = new Empleado();
             empleado.setIdUsuario(savedUsuario);
             empleado.setIdArea(area);
-            empleado.setCargo(createDTO.getCargo() != null ? createDTO.getCargo() : "");
-            empleado.setObservaciones(createDTO.getObservaciones());
-            
+            empleado.setCargo(createDTO.getCargo() != null ? createDTO.getCargo().trim() : "");
+            empleado.setObservaciones(sanitizeString(createDTO.getObservaciones()));
+
             empleadoService.save(empleado);
         }
-        
+
         return mapToUsuarioEmpleadoDTO(savedUsuario);
     }
 
@@ -336,14 +340,14 @@ public class UsuarioServiceImpl implements UsuarioService {
         usuario.setCodigo(updateDTO.getCodigo());
         usuario.setUsuario(updateDTO.getUsuario());
         usuario.setPrimerNombre(updateDTO.getPrimerNombre());
-        usuario.setSegundoNombre(updateDTO.getSegundoNombre());
+        usuario.setSegundoNombre(sanitizeString(updateDTO.getSegundoNombre()));
         usuario.setPrimerApellido(updateDTO.getPrimerApellido());
-        usuario.setSegundoApellido(updateDTO.getSegundoApellido());
+        usuario.setSegundoApellido(sanitizeString(updateDTO.getSegundoApellido()));
         usuario.setEstado(updateDTO.getEstado());
         usuario.setFechaIngreso(updateDTO.getFechaIngreso());
         usuario.setFechaSalida(updateDTO.getFechaSalida());
         usuario.setIsAdmin(updateDTO.getIsAdmin());
-        
+
         if (updateDTO.isChangePassword() && updateDTO.getPassword() != null) {
             usuario.setPassword(passwordEncoder.encode(updateDTO.getPassword()));
         }
@@ -351,23 +355,23 @@ public class UsuarioServiceImpl implements UsuarioService {
 
     private void handleEmpleadoUpdate(Usuario usuario, UsuarioEmpleadoUpdateDTO updateDTO) {
         Optional<Empleado> existingEmpleado = empleadoService.findByUsuario(usuario);
-        
+
         if (updateDTO.getEsEmpleado()) {
             Area area = areaService.findById(updateDTO.getAreaId())
                     .orElseThrow(() -> new RuntimeException("Área no encontrada"));
-            
+
             if (existingEmpleado.isPresent()) {
                 Empleado empleado = existingEmpleado.get();
                 empleado.setIdArea(area);
-                empleado.setCargo(updateDTO.getCargo());
-                empleado.setObservaciones(updateDTO.getObservaciones());
+                empleado.setCargo(updateDTO.getCargo() != null ? updateDTO.getCargo().trim() : "");
+                empleado.setObservaciones(sanitizeString(updateDTO.getObservaciones()));
                 empleadoService.save(empleado);
             } else {
                 Empleado nuevoEmpleado = new Empleado();
                 nuevoEmpleado.setIdUsuario(usuario);
                 nuevoEmpleado.setIdArea(area);
-                nuevoEmpleado.setCargo(updateDTO.getCargo());
-                nuevoEmpleado.setObservaciones(updateDTO.getObservaciones());
+                nuevoEmpleado.setCargo(updateDTO.getCargo() != null ? updateDTO.getCargo().trim() : "");
+                nuevoEmpleado.setObservaciones(sanitizeString(updateDTO.getObservaciones()));
                 empleadoService.save(nuevoEmpleado);
             }
         } else {
@@ -452,5 +456,16 @@ public class UsuarioServiceImpl implements UsuarioService {
         }
         
         return dto;
+    }
+
+    /**
+     * Sanitiza strings opcionales: convierte null, empty o whitespace-only a NULL
+     * Previene que strings vacíos "" causen problemas con unique constraints
+     */
+    private String sanitizeString(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
     }
 }

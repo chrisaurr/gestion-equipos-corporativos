@@ -39,18 +39,16 @@ public class Equipo {
     @JoinColumn(name = "id_marca", nullable = false)
     private Marca idMarca;
     
-    @NotNull
     @Size(max = 50)
-    @Column(nullable = false)
+    @Column(nullable = true) // OPCIONAL - no todos los equipos requieren color
     private String color;
-    
+
     @NotNull
     @Column(nullable = false, precision = 10, scale = 2)
     private BigDecimal valor;
-    
-    @NotNull
+
     @Size(max = 50)
-    @Column(nullable = false)
+    @Column(nullable = true) // OPCIONAL - solo equipos de alto valor tienen serie
     private String serie;
     
     @Column(columnDefinition = "text")

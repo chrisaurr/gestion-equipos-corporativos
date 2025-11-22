@@ -25,21 +25,27 @@ public class CausaServiceImpl implements CausaService {
     
     @Override
     @Transactional(readOnly = true)
-    public Page<CausaDTO> findAll(String nombre, String descripcion, Boolean activo, Pageable pageable) {
+    public Page<CausaDTO> findAll(String nombre, String descripcion, String prioridadReporte, Boolean activo, Pageable pageable) {
         QCausa qCausa = QCausa.causa;
         BooleanBuilder builder = new BooleanBuilder();
-        
-        // SIEMPRE filtrar solo activos para la tabla principal
-        builder.and(qCausa.activo.isTrue());
-        
+
+        // Filtro de activo: si viene null, mostrar todos; si viene true/false, filtrar por ese valor
+        if (activo != null) {
+            builder.and(qCausa.activo.eq(activo));
+        }
+
         if (nombre != null && !nombre.trim().isEmpty()) {
             builder.and(qCausa.nombre.containsIgnoreCase(nombre.trim()));
         }
-        
+
         if (descripcion != null && !descripcion.trim().isEmpty()) {
             builder.and(qCausa.descripcion.containsIgnoreCase(descripcion.trim()));
         }
-        
+
+        if (prioridadReporte != null && !prioridadReporte.trim().isEmpty()) {
+            builder.and(qCausa.prioridadReporte.stringValue().eq(prioridadReporte.trim()));
+        }
+
         return causaRepository.findAll(builder, pageable)
                 .map(CausaDTO::fromEntity);
     }

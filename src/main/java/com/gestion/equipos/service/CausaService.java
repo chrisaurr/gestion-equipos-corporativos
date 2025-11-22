@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface CausaService {
     
-    Page<CausaDTO> findAll(String nombre, String descripcion, Boolean activo, Pageable pageable);
+    Page<CausaDTO> findAll(String nombre, String descripcion, String prioridadReporte, Boolean activo, Pageable pageable);
     
     List<CausaDTO> findAllActive();
     

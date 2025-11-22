@@ -37,17 +37,20 @@ public class UbicacionServiceImpl implements UbicacionService {
     public Page<Ubicacion> findAllWithFilters(UbicacionFilterDTO filters, Pageable pageable) {
         BooleanBuilder predicate = new BooleanBuilder();
         QUbicacion ubicacion = QUbicacion.ubicacion;
-        
-        predicate.and(ubicacion.activo.isTrue());
-        
+
+        // Filtro de activo: si viene null, mostrar todos; si viene true/false, filtrar por ese valor
+        if (filters.getActivo() != null) {
+            predicate.and(ubicacion.activo.eq(filters.getActivo()));
+        }
+
         if (StringUtils.hasText(filters.getNombre())) {
             predicate.and(ubicacion.nombre.containsIgnoreCase(filters.getNombre().trim()));
         }
-        
+
         if (StringUtils.hasText(filters.getDescripcion())) {
             predicate.and(ubicacion.descripcion.containsIgnoreCase(filters.getDescripcion().trim()));
         }
-        
+
         return ubicacionRepository.findAll(predicate, pageable);
     }
     

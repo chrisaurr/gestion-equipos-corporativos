@@ -21,7 +21,7 @@ import java.util.Optional;
 
 @Service
 public class EquipoServiceImpl implements EquipoService {
-    
+
     @Autowired
     private EquipoRepository equipoRepository;
     
@@ -48,6 +48,19 @@ public class EquipoServiceImpl implements EquipoService {
     
     @Autowired
     private AuthService authService;
+
+    /**
+     * Sanitiza un string: convierte null, vacío o whitespace en null.
+     * Esto previene que se guarden strings vacíos '' en campos con unique constraint.
+     * @param value String a sanitizar
+     * @return null si es vacío/whitespace, o el string trimmed
+     */
+    private String sanitizeString(String value) {
+        if (value == null || value.trim().isEmpty()) {
+            return null;
+        }
+        return value.trim();
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -141,10 +154,10 @@ public class EquipoServiceImpl implements EquipoService {
         equipo.setNombre(createDTO.getNombre().trim());
         equipo.setIdMarca(marcaRepository.findById(createDTO.getMarcaId())
                 .orElseThrow(() -> new IllegalArgumentException("Marca no encontrada")));
-        equipo.setColor(createDTO.getColor().trim());
+        equipo.setColor(sanitizeString(createDTO.getColor())); // Null si vacío
         equipo.setValor(createDTO.getValor());
-        equipo.setSerie(createDTO.getSerie().trim());
-        equipo.setExtras(createDTO.getExtras());
+        equipo.setSerie(sanitizeString(createDTO.getSerie())); // Null si vacío
+        equipo.setExtras(sanitizeString(createDTO.getExtras()));
         equipo.setTipoEquipo(createDTO.getTipoEquipo());
         equipo.setTipoAlimentacion(createDTO.getTipoAlimentacion() != null ? createDTO.getTipoAlimentacion() : Alimentacion.NINGUNA);
         equipo.setEstado(createDTO.getEstado() != null ? createDTO.getEstado() : EstadoEquipo.ACTIVO);
@@ -183,10 +196,10 @@ public class EquipoServiceImpl implements EquipoService {
         equipo.setNombre(updateDTO.getNombre().trim());
         equipo.setIdMarca(marcaRepository.findById(updateDTO.getMarcaId())
                 .orElseThrow(() -> new IllegalArgumentException("Marca no encontrada")));
-        equipo.setColor(updateDTO.getColor().trim());
+        equipo.setColor(sanitizeString(updateDTO.getColor())); // Null si vacío
         equipo.setValor(updateDTO.getValor());
-        equipo.setSerie(updateDTO.getSerie().trim());
-        equipo.setExtras(updateDTO.getExtras());
+        equipo.setSerie(sanitizeString(updateDTO.getSerie())); // Null si vacío
+        equipo.setExtras(sanitizeString(updateDTO.getExtras()));
         equipo.setTipoAlimentacion(updateDTO.getTipoAlimentacion());
         equipo.setEstado(updateDTO.getEstado());
         equipo.setFechaCommit(LocalDateTime.now());
@@ -312,8 +325,9 @@ public class EquipoServiceImpl implements EquipoService {
             }
             case ELECTRONICO -> {
                 Electronico electronico = new Electronico();
-                electronico.setImei(createDTO.getElectronico().getImei());
-                electronico.setSistemaOperativo(createDTO.getElectronico().getSistemaOperativo());
+                // CRITICAL: sanitize para evitar '' en campos unique
+                electronico.setImei(sanitizeString(createDTO.getElectronico().getImei()));
+                electronico.setSistemaOperativo(sanitizeString(createDTO.getElectronico().getSistemaOperativo()));
                 electronico.setConectividad(createDTO.getElectronico().getConectividad());
                 electronico.setOperador(createDTO.getElectronico().getOperador());
                 electronico.setIdEquipo(equipo);
@@ -353,8 +367,9 @@ public class EquipoServiceImpl implements EquipoService {
             case ELECTRONICO -> {
                 Electronico electronico = electronicoRepository.findByIdEquipo(equipo)
                         .orElseThrow(() -> new IllegalStateException("Datos de electrónico no encontrados"));
-                electronico.setImei(updateDTO.getElectronico().getImei());
-                electronico.setSistemaOperativo(updateDTO.getElectronico().getSistemaOperativo());
+                // CRITICAL: sanitize para evitar '' en campos unique
+                electronico.setImei(sanitizeString(updateDTO.getElectronico().getImei()));
+                electronico.setSistemaOperativo(sanitizeString(updateDTO.getElectronico().getSistemaOperativo()));
                 electronico.setConectividad(updateDTO.getElectronico().getConectividad());
                 electronico.setOperador(updateDTO.getElectronico().getOperador());
                 electronicoRepository.save(electronico);

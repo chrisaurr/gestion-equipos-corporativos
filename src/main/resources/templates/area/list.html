@@ -80,7 +80,7 @@
                                         <th>
                                             <select class="form-control form-control-sm filter-input" id="filterActivo">
                                                 <option value="">Todos</option>
-                                                <option value="true">Activo</option>
+                                                <option value="true" selected>Activo</option>
                                                 <option value="false">Inactivo</option>
                                             </select>
                                         </th>
@@ -292,6 +292,7 @@
                 // Limpiar filtros
                 $('#clearFilters').click(function() {
                     $('.filter-input').val('');
+                    $('#filterActivo').val('true'); // Restaurar a mostrar solo activos
                     currentPage = 0;
                     currentFilters = {};
                     loadAreas();
@@ -380,6 +381,11 @@
                         const fecha = area.fechaCommit ? 
                             new Date(area.fechaCommit).toLocaleDateString() : '';
                         
+                        const deleteButton = area.activo ?
+                            `<button class="btn btn-danger btn-sm" onclick="deleteArea(${area.id})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>` : '';
+
                         tbody.append(`
                             <tr>
                                 <td>${area.nombre}</td>
@@ -396,9 +402,7 @@
                                         <button class="btn btn-primary btn-sm" onclick="manageResponsable(${area.id}, '${area.nombre.replace(/'/g, "\\'")}', ${area.responsableId || 'null'})" title="Gestionar responsable">
                                             <i class="fas fa-user-tie"></i>
                                         </button>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteArea(${area.id})" title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        ${deleteButton}
                                     </div>
                                 </td>
                             </tr>

@@ -86,7 +86,7 @@
                                         <th>
                                             <select class="form-control form-control-sm filter-input" id="filterActivo">
                                                 <option value="">Todos</option>
-                                                <option value="true">Activo</option>
+                                                <option value="true" selected>Activo</option>
                                                 <option value="false">Inactivo</option>
                                             </select>
                                         </th>
@@ -274,6 +274,7 @@
                 // Limpiar filtros
                 $('#clearFilters').click(function() {
                     $('.filter-input').val('');
+                    $('#filterActivo').val('true'); // Restaurar a mostrar solo activos
                     currentPage = 0;
                     currentFilters = {};
                     loadCausas();
@@ -298,7 +299,8 @@
                     currentFilters = {
                         nombre: $('#filterNombre').val(),
                         descripcion: $('#filterDescripcion').val(),
-                        activo: $('#filterActivo').val() !== '' ? $('#filterActivo').val() : null,
+                        prioridadReporte: $('#filterPrioridad').val(),
+                        activo: $('#filterActivo').val() !== '' ? $('#filterActivo').val() === 'true' : null,
                         page: currentPage,
                         size: pageSize,
                         sort: 'nombre',
@@ -349,6 +351,11 @@
                     }
                     
                     data.content.forEach(causa => {
+                        const deleteButton = causa.activo ?
+                            `<button class="btn btn-danger btn-sm" onclick="deleteCausa(${causa.id})" title="Eliminar">
+                                <i class="fas fa-trash"></i>
+                            </button>` : '';
+
                         tbody.append(`
                             <tr>
                                 <td>${causa.nombre}</td>
@@ -363,9 +370,7 @@
                                         <button class="btn btn-warning btn-sm" onclick="editCausa(${causa.id})" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-danger btn-sm" onclick="deleteCausa(${causa.id})" title="Eliminar">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        ${deleteButton}
                                     </div>
                                 </td>
                             </tr>

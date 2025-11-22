@@ -11,12 +11,17 @@ import java.util.List;
 public interface AreaRepository extends JpaRepository<Area, Integer>, QuerydslPredicateExecutor<Area> {
     
     List<Area> findByActivoTrueOrderByNombre();
-    
+
     boolean existsByNombreAndIdNot(String nombre, Integer id);
-    
+
     boolean existsByNombre(String nombre);
-    
+
     boolean existsByNombreIgnoreCase(String nombre);
-    
+
     boolean existsByNombreIgnoreCaseAndIdNot(String nombre, Integer id);
+
+    // Métodos para reactivación automática (patrón de Marca/Ubicación/Causa)
+    java.util.Optional<Area> findByNombreIgnoreCaseAndActivoFalse(String nombre);
+
+    java.util.Optional<Area> findByNombreIgnoreCaseAndActivoTrue(String nombre);
 }

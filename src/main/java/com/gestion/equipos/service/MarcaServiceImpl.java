@@ -38,13 +38,16 @@ public class MarcaServiceImpl implements MarcaService {
     public Page<Marca> findAllWithFilters(MarcaFilterDTO filters, Pageable pageable) {
         BooleanBuilder predicate = new BooleanBuilder();
         QMarca marca = QMarca.marca;
-        
-        predicate.and(marca.activo.isTrue());
-        
+
+        // Filtro de activo: si viene null, mostrar todos; si viene true/false, filtrar por ese valor
+        if (filters.getActivo() != null) {
+            predicate.and(marca.activo.eq(filters.getActivo()));
+        }
+
         if (StringUtils.hasText(filters.getNombre())) {
             predicate.and(marca.nombre.containsIgnoreCase(filters.getNombre().trim()));
         }
-        
+
         // Hacer eager fetch de la relación creadoPor
         return marcaRepository.findAll(predicate, pageable);
     }

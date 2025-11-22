@@ -147,8 +147,9 @@
         </section>
     </div>
 
-    <!-- Modal for Employee History -->
+    <!-- Modals -->
     <div layout:fragment="modals">
+        <!-- Modal for Employee History -->
         <div class="modal fade" id="historyModal" tabindex="-1" role="dialog" aria-labelledby="historyModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-xl" role="document">
                 <div class="modal-content">
@@ -174,6 +175,33 @@
                 </div>
             </div>
         </div>
+
+        <!-- Modal for Equipos Asignados -->
+        <div class="modal fade" id="equiposModal" tabindex="-1" role="dialog" aria-labelledby="equiposModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-xl" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title" id="equiposModalLabel">
+                            <i class="fas fa-laptop"></i> Equipos Asignados
+                        </h4>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div id="equiposContent">
+                            <div class="text-center">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p>Cargando equipos...</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cerrar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div layout:fragment="script">
@@ -188,6 +216,14 @@
             }
             
             function initUsuariosList() {
+                // Replace login page in history if we just came from there
+                // This prevents back button from returning to login after authentication
+                if (document.referrer && document.referrer.includes('/login')) {
+                    if (window.history && window.history.replaceState) {
+                        window.history.replaceState(null, null, window.location.href);
+                    }
+                }
+
                 let currentPage = 0;
                 let pageSize = 10;
                 let currentFilters = {};
@@ -305,11 +341,15 @@
                                         <a href="/usuarios/${usuario.usuarioId}/editar" class="btn btn-warning btn-sm" title="Editar">
                                             <i class="fas fa-edit"></i>
                                         </a>
-                                        ${usuario.esEmpleado ? 
-                                            `<button type="button" class="btn btn-success btn-sm" title="Ver Historial" 
+                                        ${usuario.esEmpleado ?
+                                            `<button type="button" class="btn btn-success btn-sm" title="Ver Historial"
                                                      onclick="viewHistory(${usuario.usuarioId}, '${usuario.nombreCompleto}')">
                                                 <i class="fas fa-history"></i>
                                              </button>` : ''}
+                                        <button type="button" class="btn btn-primary btn-sm" title="Ver Equipos"
+                                                onclick="viewEquipos(${usuario.usuarioId}, '${usuario.nombreCompleto}')">
+                                            <i class="fas fa-laptop"></i>
+                                        </button>
                                         <button type="button" class="btn btn-danger btn-sm" title="Eliminar"
                                                 onclick="confirmDelete(${usuario.usuarioId}, '${usuario.nombreCompleto}')">
                                             <i class="fas fa-trash"></i>
@@ -414,9 +454,9 @@
                             <p>Cargando historial...</p>
                         </div>
                     `);
-                    
+
                     $('#historyModal').modal('show');
-                    
+
                     $.ajax({
                         url: `/api/v1/usuarios/${usuarioId}/historial-empleado`,
                         method: 'GET',
@@ -431,6 +471,37 @@
                                 <div class="alert alert-danger">
                                     <i class="fas fa-exclamation-triangle"></i>
                                     Error cargando historial: ${xhr.responseText || error}
+                                </div>
+                            `);
+                        }
+                    });
+                };
+
+                window.viewEquipos = function(usuarioId, nombreCompleto) {
+                    $('#equiposModalLabel').html(`<i class="fas fa-laptop"></i> Equipos Asignados - ${nombreCompleto}`);
+                    $('#equiposContent').html(`
+                        <div class="text-center">
+                            <i class="fas fa-spinner fa-spin fa-2x"></i>
+                            <p>Cargando equipos...</p>
+                        </div>
+                    `);
+
+                    $('#equiposModal').modal('show');
+
+                    $.ajax({
+                        url: `/api/v1/usuarios/${usuarioId}/equipos`,
+                        method: 'GET',
+                        xhrFields: {
+                            withCredentials: true
+                        },
+                        success: function(data) {
+                            renderEquiposTable(data);
+                        },
+                        error: function(xhr, status, error) {
+                            $('#equiposContent').html(`
+                                <div class="alert alert-danger">
+                                    <i class="fas fa-exclamation-triangle"></i>
+                                    Error cargando equipos: ${xhr.responseText || error}
                                 </div>
                             `);
                         }
@@ -517,6 +588,88 @@
                         case 'REINGRESO': return 'Reingreso';
                         case 'SALIDA': return 'Salida';
                         default: return tipoCambio;
+                    }
+                }
+
+                function renderEquiposTable(equipos) {
+                    if (!equipos || equipos.length === 0) {
+                        $('#equiposContent').html(`
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i>
+                                Este usuario no tiene equipos asignados actualmente.
+                            </div>
+                        `);
+                        return;
+                    }
+
+                    let tableHTML = `
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover">
+                                <thead class="thead-dark">
+                                    <tr>
+                                        <th>Identificador</th>
+                                        <th>Tipo</th>
+                                        <th>Marca</th>
+                                        <th>Modelo</th>
+                                        <th>Serie</th>
+                                        <th>Estado</th>
+                                        <th>Ubicación</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                    `;
+
+                    equipos.forEach(equipo => {
+                        tableHTML += `
+                            <tr>
+                                <td>${equipo.identificador || '-'}</td>
+                                <td><span class="badge ${getTipoEquipoBadge(equipo.tipoEquipo)}">${formatTipoEquipo(equipo.tipoEquipo)}</span></td>
+                                <td>${equipo.marcaNombre || '-'}</td>
+                                <td>${equipo.modelo || '-'}</td>
+                                <td>${equipo.serie || '-'}</td>
+                                <td><span class="badge ${getEstadoEquipoBadge(equipo.estado)}">${equipo.estado}</span></td>
+                                <td>${equipo.ubicacionNombre || '-'}</td>
+                            </tr>
+                        `;
+                    });
+
+                    tableHTML += `
+                                </tbody>
+                            </table>
+                        </div>
+                    `;
+
+                    $('#equiposContent').html(tableHTML);
+                }
+
+                function getTipoEquipoBadge(tipoEquipo) {
+                    switch(tipoEquipo) {
+                        case 'VEHICULO': return 'badge-primary';
+                        case 'ELECTRONICO': return 'badge-info';
+                        case 'MOBILIARIO': return 'badge-secondary';
+                        case 'HERRAMIENTA': return 'badge-warning';
+                        default: return 'badge-light';
+                    }
+                }
+
+                function formatTipoEquipo(tipoEquipo) {
+                    switch(tipoEquipo) {
+                        case 'VEHICULO': return 'Vehículo';
+                        case 'ELECTRONICO': return 'Electrónico';
+                        case 'MOBILIARIO': return 'Mobiliario';
+                        case 'HERRAMIENTA': return 'Herramienta';
+                        default: return tipoEquipo;
+                    }
+                }
+
+                function getEstadoEquipoBadge(estado) {
+                    switch(estado) {
+                        case 'ACTIVO': return 'badge-success';
+                        case 'INACTIVO': return 'badge-danger';
+                        case 'MANTENIMIENTO': return 'badge-warning';
+                        case 'SUSPENDIDO': return 'badge-dark';
+                        case 'BAJA': return 'badge-secondary';
+                        default: return 'badge-light';
                     }
                 }
             }

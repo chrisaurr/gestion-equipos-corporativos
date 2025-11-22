@@ -51,13 +51,18 @@ public class EquipoWebController {
     }
     
     @PostMapping
-    public String create(@Valid @ModelAttribute EquipoCreateDTO equipoCreateDTO, 
-                        BindingResult bindingResult, 
-                        Model model, 
+    public String create(@Valid @ModelAttribute EquipoCreateDTO equipoCreateDTO,
+                        BindingResult bindingResult,
+                        Model model,
                         RedirectAttributes redirectAttributes) {
-        
+
         if (bindingResult.hasErrors()) {
-            model.addAttribute("errorMessage", "Por favor corrige los errores en el formulario");
+            // Mostrar errores específicos por campo
+            StringBuilder errorDetails = new StringBuilder("Por favor corrige los siguientes errores:\n");
+            bindingResult.getFieldErrors().forEach(error ->
+                errorDetails.append("- ").append(error.getDefaultMessage()).append("\n")
+            );
+            model.addAttribute("errorMessage", errorDetails.toString());
             model.addAttribute("marcas", marcaService.findAllActive());
             model.addAttribute("ubicaciones", ubicacionService.findAllActive());
             model.addAttribute("alimentaciones", Alimentacion.values());
@@ -65,12 +70,33 @@ public class EquipoWebController {
             model.addAttribute("operadores", Operador.values());
             return "equipo/create";
         }
-        
+
         try {
+            // Validación programática del DTO
             equipoCreateDTO.validate();
+
             EquipoDTO createdEquipo = equipoService.create(equipoCreateDTO);
-            redirectAttributes.addFlashAttribute("successMessage", "Equipo creado exitosamente con ID: " + createdEquipo.getIdentificador());
+
+            // Mensaje más descriptivo usando el nombre del equipo en lugar del identificador (que puede ser null)
+            String tipoEquipo = createdEquipo.getTipoEquipo().toString().toLowerCase();
+            String mensaje = String.format("Equipo '%s' (%s) creado exitosamente",
+                createdEquipo.getNombre(),
+                tipoEquipo);
+
+            redirectAttributes.addFlashAttribute("successMessage", mensaje);
             return "redirect:/equipos";
+
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // Usar el helper del GlobalExceptionHandler para mensajes amigables
+            String friendlyMessage = com.gestion.equipos.exception.GlobalExceptionHandler.extractUserFriendlyMessage(ex);
+            model.addAttribute("errorMessage", friendlyMessage);
+            model.addAttribute("marcas", marcaService.findAllActive());
+            model.addAttribute("ubicaciones", ubicacionService.findAllActive());
+            model.addAttribute("alimentaciones", Alimentacion.values());
+            model.addAttribute("conectividades", Conectividad.values());
+            model.addAttribute("operadores", Operador.values());
+            return "equipo/create";
+
         } catch (Exception e) {
             model.addAttribute("errorMessage", e.getMessage());
             model.addAttribute("marcas", marcaService.findAllActive());

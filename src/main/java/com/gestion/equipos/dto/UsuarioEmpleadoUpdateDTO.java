@@ -44,9 +44,8 @@ public class UsuarioEmpleadoUpdateDTO {
     private LocalDate fechaIngreso;
     
     private LocalDate fechaSalida;
-    
-    @NotNull(message = "Debe especificar si es administrador")
-    private Boolean isAdmin;
+
+    private Boolean isAdmin; // Checkbox siempre envía true/false
     
     private String password;
     

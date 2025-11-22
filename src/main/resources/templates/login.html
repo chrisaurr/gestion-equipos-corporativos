@@ -3,52 +3,139 @@
 <head>
     <meta charset="utf-8">
     <meta content="IE=edge" http-equiv="X-UA-Compatible">
-    <title>Admin LTE 3 | Log in</title>
-    <!-- Tell the browser to be responsive to screen width -->
+    <title>Gestión de equipos | Iniciar sesión</title>
     <meta content="width=device-width, initial-scale=1" name="viewport">
 
     <!-- Font Awesome -->
     <link rel="stylesheet" th:href="@{~/webjars/AdminLTE/3.2.0/plugins/fontawesome-free/css/all.min.css}"
           type="text/css">
-    <!-- Ionicons -->
-    <link href="https://code.ionicframework.com/ionicons/2.0.1/css/ionicons.min.css" rel="stylesheet" type="text/css">
     <!-- icheck bootstrap -->
     <link rel="stylesheet" th:href="@{~/webjars/AdminLTE/3.2.0/plugins/icheck-bootstrap/icheck-bootstrap.min.css}"
           type="text/css">
     <!-- Theme style -->
     <link rel="stylesheet" th:href="@{~/webjars/AdminLTE/3.2.0/dist/css/adminlte.min.css}" type="text/css">
-    <!-- Google Font: Source Sans Pro -->
-    <link href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400i,700" rel="stylesheet"
-          type="text/css">
+    <style>
+        body.login-page {
+            background: linear-gradient(135deg, #343a40 0%, #495057 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .login-box {
+            width: 420px;
+        }
+
+        .login-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .login-logo b {
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 500;
+        }
+
+        .card {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .card-body {
+            padding: 40px;
+        }
+
+        .login-box-msg {
+            text-align: center;
+            margin-bottom: 25px;
+            color: #6c757d;
+        }
+
+        .form-control {
+            border: 1px solid #ced4da;
+            padding: 10px 15px;
+            transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+        }
+
+        .form-control:focus {
+            border-color: #80bdff;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,.25);
+        }
+
+        .input-group-text {
+            background-color: #e9ecef;
+            border: 1px solid #ced4da;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+            padding: 10px;
+            transition: all 0.15s ease-in-out;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+            box-shadow: 0 4px 12px rgba(0,123,255,.3);
+        }
+
+        .text-danger {
+            background-color: #f8d7da;
+            border-left: 3px solid #dc3545;
+            padding: 10px 15px;
+            border-radius: 4px;
+        }
+
+        .text-success {
+            background-color: #d4edda;
+            border-left: 3px solid #28a745;
+            padding: 10px 15px;
+            border-radius: 4px;
+        }
+
+        /* Ocultar el login box inicialmente para evitar flash */
+        .login-box {
+            opacity: 0;
+            transition: opacity 0.3s ease-in;
+        }
+
+        .login-box.show {
+            opacity: 1;
+        }
+    </style>
 </head>
-<body class="hold-transition login-page">
+<body class="login-page">
 <div class="login-box">
     <div class="login-logo">
-        <a href="../../index2.html"><b>Admin</b>LTE 3</a>
+        <b>Sistema de gestión de equipos</b>
     </div>
-    <!-- /.login-logo -->
+
     <div class="card">
         <div class="card-body login-card-body">
-            <p class="login-box-msg" th:if="${param.error}">
-                User/password is invalid.
+            <p class="login-box-msg text-danger" th:if="${param.error}">
+                Usuario o contraseña incorrectos.
             </p>
-            <p class="login-box-msg" th:if="${param.logout}">
-                You have been logged out.
+            <p class="login-box-msg text-success" th:if="${param.logout}">
+                Has cerrado sesión correctamente.
             </p>
 
-            <p class="login-box-msg">Sign in to start your session</p>
+            <p class="login-box-msg">Inicia sesión para continuar</p>
 
             <form method="post" th:action="@{~/login}">
                 <div class="input-group mb-3">
-                    <input class="form-control" name="username" placeholder="username" type="text">
+                    <input id="usuario" class="form-control" name="username" placeholder="Usuario" type="text" required autofocus>
                     <div class="input-group-append">
                         <div class="input-group-text">
-                            <span class="fas fa-envelope"></span>
+                            <span class="fas fa-user"></span>
                         </div>
                     </div>
                 </div>
                 <div class="input-group mb-3">
-                    <input class="form-control" name="password" placeholder="Password" type="password">
+                    <input id="password" class="form-control" name="password" placeholder="Contraseña" type="password" required>
                     <div class="input-group-append">
                         <div class="input-group-text">
                             <span class="fas fa-lock"></span>
@@ -56,44 +143,16 @@
                     </div>
                 </div>
                 <div class="row">
-                    <div class="col-8">
-                        <div class="icheck-primary">
-                            <input id="remember" type="checkbox">
-                            <label for="remember">
-                                Remember Me
-                            </label>
-                        </div>
+                    <div class="col-12">
+                        <button class="btn btn-primary btn-block" type="submit">
+                            <i class="fas fa-sign-in-alt mr-2"></i>Iniciar sesión
+                        </button>
                     </div>
-                    <!-- /.col -->
-                    <div class="col-4">
-                        <button class="btn btn-primary btn-block" type="submit">Sign In</button>
-                    </div>
-                    <!-- /.col -->
                 </div>
             </form>
-
-            <div class="social-auth-links text-center mb-3">
-                <p>- OR -</p>
-                <a class="btn btn-block btn-primary" href="#">
-                    <i class="fab fa-facebook mr-2"></i> Sign in using Facebook
-                </a>
-                <a class="btn btn-block btn-danger" href="#">
-                    <i class="fab fa-google-plus mr-2"></i> Sign in using Google+
-                </a>
-            </div>
-            <!-- /.social-auth-links -->
-
-            <p class="mb-1">
-                <a href="forgot-password.html">I forgot my password</a>
-            </p>
-            <p class="mb-0">
-                <a class="text-center" href="/register">Register a new membership</a>
-            </p>
         </div>
-        <!-- /.login-card-body -->
     </div>
 </div>
-<!-- /.login-box -->
 
 <!-- jQuery -->
 <script th:src="@{~/webjars/AdminLTE/3.2.0/plugins/jquery/jquery.min.js}" type="text/javascript"></script>
@@ -102,6 +161,45 @@
         type="text/javascript"></script>
 <!-- AdminLTE App -->
 <script th:src="@{~/webjars/AdminLTE/3.2.0/dist/js/adminlte.min.js}" type="text/javascript"></script>
+
+<!-- Redirect authenticated users -->
+<script type="text/javascript">
+    // Función para verificar autenticación
+    function checkAuthAndRedirect() {
+        $.ajax({
+            url: '/api/v1/usuarios/auth-status',
+            method: 'GET',
+            cache: false, // Importante: no cachear esta petición
+            success: function(response) {
+                if (response.authenticated === true) {
+                    // User is already authenticated, redirect to main page
+                    window.location.replace('/usuarios'); // replace en vez de href para no agregar al historial
+                } else {
+                    // Usuario NO autenticado, mostrar formulario de login
+                    $('.login-box').addClass('show');
+                }
+            },
+            error: function() {
+                // Si falla la verificación, mostrar formulario de login por seguridad
+                $('.login-box').addClass('show');
+                console.log('Could not check authentication status');
+            }
+        });
+    }
+
+    // Ejecutar cuando la página carga normalmente
+    $(document).ready(function() {
+        checkAuthAndRedirect();
+    });
+
+    // CRÍTICO: Ejecutar cuando la página se muestra desde el caché (botón atrás)
+    window.addEventListener('pageshow', function(event) {
+        // event.persisted indica que la página viene del cache (BFCache)
+        if (event.persisted) {
+            checkAuthAndRedirect();
+        }
+    });
+</script>
 
 </body>
 </html>

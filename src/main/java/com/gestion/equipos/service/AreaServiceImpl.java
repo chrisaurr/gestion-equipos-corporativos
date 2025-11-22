@@ -71,21 +71,47 @@ public class AreaServiceImpl implements AreaService {
 
     @Override
     public Area save(Area area) {
-        validateAreaForCreate(area);
+        // Trimear el nombre antes de cualquier validación
+        String nombreTrimmed = area.getNombre().trim();
+        area.setNombre(nombreTrimmed);
+
+        // 1. Verificar si existe un área inactiva con el mismo nombre (case-insensitive)
+        Optional<Area> areaInactiva = areaRepository.findByNombreIgnoreCaseAndActivoFalse(nombreTrimmed);
+        if (areaInactiva.isPresent()) {
+            // Reactivar el área existente
+            Area areaExistente = areaInactiva.get();
+            areaExistente.setActivo(true);
+            areaExistente.setFechaCommit(LocalDateTime.now());
+            return areaRepository.save(areaExistente);
+        }
+
+        // 2. Verificar si existe un área activa con el mismo nombre (case-insensitive)
+        Optional<Area> areaActiva = areaRepository.findByNombreIgnoreCaseAndActivoTrue(nombreTrimmed);
+        if (areaActiva.isPresent()) {
+            throw new RuntimeException("Ya existe un área con el nombre: " + nombreTrimmed);
+        }
+
+        // 3. Crear nueva área
         area.setFechaCommit(LocalDateTime.now());
         return areaRepository.save(area);
     }
 
     @Override
     public Area update(Integer id, Area area) {
-        validateAreaForUpdate(id, area);
-        
         Area existingArea = areaRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Área no encontrada con ID: " + id));
-        
-        updateAreaFields(existingArea, area);
+
+        // Trimear el nombre antes de validación
+        String nombreTrimmed = area.getNombre().trim();
+
+        // Validar si existe otra área activa con el mismo nombre (excluyendo el actual)
+        if (existsByNombreAndIdNot(nombreTrimmed, id)) {
+            throw new RuntimeException("Ya existe otra área con el nombre: " + nombreTrimmed);
+        }
+
+        existingArea.setNombre(nombreTrimmed);
         existingArea.setFechaCommit(LocalDateTime.now());
-        
+
         return areaRepository.save(existingArea);
     }
 
@@ -188,18 +214,6 @@ public class AreaServiceImpl implements AreaService {
     @Transactional(readOnly = true)
     public boolean hasEmpleadosActivos(Integer areaId) {
         return empleadoService.existsByAreaAndUsuarioActivo(areaId);
-    }
-
-    private void validateAreaForCreate(Area area) {
-        if (existsByNombre(area.getNombre())) {
-            throw new RuntimeException("Ya existe un área con el nombre: " + area.getNombre());
-        }
-    }
-
-    private void validateAreaForUpdate(Integer id, Area area) {
-        if (existsByNombreAndIdNot(area.getNombre(), id)) {
-            throw new RuntimeException("Ya existe otra área con el nombre: " + area.getNombre());
-        }
     }
 
     @Override

@@ -43,12 +43,11 @@ public class UsuarioEmpleadoCreateDTO {
     private LocalDate fechaIngreso;
     
     private LocalDate fechaSalida;
-    
-    @NotNull(message = "Debe especificar si es administrador")
-    private Boolean isAdmin = false;
+
+    private Boolean isAdmin = false; // Default false, checkbox siempre envía true/false
     
     @NotBlank(message = "La contraseña es obligatoria")
-    @Size(min = 4, max = 100, message = "La contraseña debe tener entre 4 y 100 caracteres")
+    @Size(min = 4, max = 72, message = "La contraseña debe tener entre 4 y 72 caracteres")
     private String password;
     
     @NotBlank(message = "Debe confirmar la contraseña")

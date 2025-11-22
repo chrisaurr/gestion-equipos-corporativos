@@ -72,10 +72,19 @@ public class UsuarioWebController {
 
         try {
             usuarioService.saveUsuarioEmpleado(createDTO);
-            
-            redirectAttributes.addFlashAttribute("successMessage", 
+
+            redirectAttributes.addFlashAttribute("successMessage",
                                                "Usuario creado exitosamente");
             return "redirect:/usuarios";
+
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // Usar el helper del GlobalExceptionHandler para mensajes amigables
+            String friendlyMessage = com.gestion.equipos.exception.GlobalExceptionHandler.extractUserFriendlyMessage(ex);
+            model.addAttribute("errorMessage", friendlyMessage);
+            model.addAttribute("estados", EstadoUsuario.values());
+            model.addAttribute("areas", areaService.findAllActive());
+            return "usuario/create";
+
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Error al crear usuario: " + e.getMessage());
             model.addAttribute("estados", EstadoUsuario.values());
@@ -145,10 +154,20 @@ public class UsuarioWebController {
 
         try {
             usuarioService.updateUsuarioEmpleado(id, updateDTO);
-            
-            redirectAttributes.addFlashAttribute("successMessage", 
+
+            redirectAttributes.addFlashAttribute("successMessage",
                                                "Usuario actualizado exitosamente");
             return "redirect:/usuarios";
+
+        } catch (org.springframework.dao.DataIntegrityViolationException ex) {
+            // Usar el helper del GlobalExceptionHandler para mensajes amigables
+            String friendlyMessage = com.gestion.equipos.exception.GlobalExceptionHandler.extractUserFriendlyMessage(ex);
+            model.addAttribute("errorMessage", friendlyMessage);
+            model.addAttribute("usuarioId", id);
+            model.addAttribute("estados", EstadoUsuario.values());
+            model.addAttribute("areas", areaService.findAllActive());
+            return "usuario/edit";
+
         } catch (Exception e) {
             model.addAttribute("errorMessage", "Error al actualizar usuario: " + e.getMessage());
             model.addAttribute("usuarioId", id);

@@ -104,8 +104,11 @@
                                         </div>
                                         <div class="col-md-3">
                                             <div class="form-group">
-                                                <label for="valor">Valor</label>
-                                                <input type="number" class="form-control" id="valor" th:field="*{valor}" step="0.01">
+                                                <label for="valor">Valor <span class="text-danger">*</span></label>
+                                                <input type="number" class="form-control" id="valor" th:field="*{valor}"
+                                                       th:class="${#fields.hasErrors('valor')} ? 'form-control is-invalid' : 'form-control'"
+                                                       step="0.01" required>
+                                                <div class="invalid-feedback" th:if="${#fields.hasErrors('valor')}" th:errors="*{valor}"></div>
                                             </div>
                                         </div>
                                         <div class="col-md-3">
